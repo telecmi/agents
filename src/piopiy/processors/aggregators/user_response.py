@@ -1,0 +1,51 @@
+#
+# Copyright (c) 2024–2025, Daily
+#
+# SPDX-License-Identifier: BSD 2-Clause License
+#
+
+"""User response aggregation for text frames.
+
+This module provides an aggregator that collects user responses and outputs
+them as TextFrame objects, useful for capturing and processing user input
+in conversational pipelines.
+"""
+
+from piopiy.frames.frames import TextFrame
+from piopiy.processors.aggregators.llm_response import LLMUserContextAggregator
+from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
+
+
+class UserResponseAggregator(LLMUserContextAggregator):
+    """Aggregates user responses into TextFrame objects.
+
+    This aggregator extends LLMUserContextAggregator to specifically handle
+    user input by collecting text responses and outputting them as TextFrame
+    objects when the aggregation is complete.
+    """
+
+    def __init__(self, **kwargs):
+        """Initialize the user response aggregator.
+
+        Args:
+            **kwargs: Additional arguments passed to parent LLMUserContextAggregator.
+        """
+        super().__init__(context=OpenAILLMContext(), **kwargs)
+
+    async def push_aggregation(self):
+        """Push the aggregated user response as a TextFrame.
+
+        Creates a TextFrame from the current aggregation if it contains content,
+        resets the aggregation state, and pushes the frame downstream.
+        """
+        if len(self._aggregation) > 0:
+            frame = TextFrame(self._aggregation.strip())
+
+            # Reset the aggregation. Reset it before pushing it down, otherwise
+            # if the tasks gets cancelled we won't be able to clear things up.
+            self._aggregation = ""
+
+            await self.push_frame(frame)
+
+            # Reset our accumulator state.
+            await self.reset()
