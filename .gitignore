@@ -1,0 +1,13 @@
+.cmi/
+
+# Ignore egg-info directories (e.g., from building packages) anywhere
+*.egg-info/
+
+# Ignore Python cache directories and files anywhere
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore environment files (e.g., .env for dotenv) anywhere
+.env
+.env.*
