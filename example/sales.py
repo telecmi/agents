@@ -2,7 +2,7 @@
 
 import asyncio
 from piopiy import pipeline
-from piopiy.agent import Agent, current_room, current_token
+from piopiy.agent import Agent, current_room, current_token, current_url
 from piopiy.pipeline.runner import PipelineRunner
 from piopiy.pipeline.task import PipelineParams, PipelineTask
 from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
@@ -18,9 +18,18 @@ import os
 # ... other imports
 
 async def create_session():
-    
-    
+    # Provide session context when not created via Agent.join_room
+    telecmi_url = os.getenv("TELECMI_URL") or current_url.get(None)
+    if telecmi_url:
+        current_url.set(telecmi_url)
 
+    room_name = os.getenv("ROOM_NAME") or current_room.get(None)
+    if room_name:
+        current_room.set(room_name)
+
+    room_token = os.getenv("ROOM_TOKEN") or current_token.get(None)
+    if room_token:
+        current_token.set(room_token)
 
     transport = TeleCMITransport(
         params=TeleCMIParams(
