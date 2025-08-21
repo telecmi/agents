@@ -132,6 +132,7 @@ class TeleCMITransportClient:
             callbacks: Event callback handlers.
             transport_name: Name identifier for the transport.
         """
+        
         self._url = current_url.get()
         self._token = current_token.get()
         self._room_name = current_room.get()
@@ -764,9 +765,6 @@ class TeleCMITransport(BaseTransport):
 
     def __init__(
         self,
-        url: str,
-        token: str,
-        room_name: str,
         params: Optional[TeleCMIParams] = None,
         input_name: Optional[str] = None,
         output_name: Optional[str] = None,
@@ -795,8 +793,13 @@ class TeleCMITransport(BaseTransport):
         )
         self._params = params or TeleCMIParams()
 
+   
+        self._url = current_url.get()
+        self._token = current_token.get()
+        self._room_name = current_room.get()
+
         self._client = TeleCMITransportClient(
-            url, token, room_name, self._params, callbacks, self.name
+            self._url, self._token, self._room_name, self._params, callbacks, self.name
         )
         self._input: Optional[TeleCMIInputTransport] = None
         self._output: Optional[TeleCMIOutputTransport] = None

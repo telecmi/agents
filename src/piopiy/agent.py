@@ -54,7 +54,7 @@ class Agent:
             room = invite["room_name"]
             token = invite["token"]
             url = invite["url"]
-
+         
             if room in self.active_sessions:
                 logger.warning(f"Session {room} already running")
                 return
