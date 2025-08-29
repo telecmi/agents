@@ -10,7 +10,7 @@ import base64
 import json
 import uuid
 import warnings
-from typing import AsyncGenerator, List, Optional, Union
+from typing import AsyncGenerator, List, Literal, Optional, Union
 
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -29,7 +29,6 @@ from piopiy.frames.frames import (
 from piopiy.processors.frame_processor import FrameDirection
 from piopiy.services.tts_service import AudioContextWordTTSService, TTSService
 from piopiy.transcriptions.language import Language
-from piopiy.utils.asyncio.watchdog_async_iterator import WatchdogAsyncIterator
 from piopiy.utils.text.base_text_aggregator import BaseTextAggregator
 from piopiy.utils.text.skip_tags_aggregator import SkipTagsAggregator
 from piopiy.utils.tracing.service_decorators import traced_tts
@@ -102,7 +101,7 @@ class CartesiaTTSService(AudioContextWordTTSService):
 
         Parameters:
             language: Language to use for synthesis.
-            speed: Voice speed control (string or float).
+            speed: Voice speed control.
             emotion: List of emotion controls.
 
                 .. deprecated:: 0.0.68
@@ -110,7 +109,7 @@ class CartesiaTTSService(AudioContextWordTTSService):
         """
 
         language: Optional[Language] = Language.EN
-        speed: Optional[Union[str, float]] = ""
+        speed: Optional[Literal["slow", "normal", "fast"]] = None
         emotion: Optional[List[str]] = []
 
     def __init__(
@@ -387,10 +386,8 @@ class CartesiaTTSService(AudioContextWordTTSService):
         await self._websocket.send(msg)
         self._context_id = None
 
-    async def _receive_messages(self):
-        async for message in WatchdogAsyncIterator(
-            self._get_websocket(), manager=self.task_manager
-        ):
+    async def _process_messages(self):
+        async for message in self._get_websocket():
             msg = json.loads(message)
             if not msg or not self.audio_context_available(msg["context_id"]):
                 continue
@@ -421,6 +418,14 @@ class CartesiaTTSService(AudioContextWordTTSService):
                 self._context_id = None
             else:
                 logger.error(f"{self} error, unknown message type: {msg}")
+
+    async def _receive_messages(self):
+        while True:
+            await self._process_messages()
+            # Cartesia times out after 5 minutes of innactivity (no keepalive
+            # mechanism is available). So, we try to reconnect.
+            logger.debug(f"{self} Cartesia connection was disconnected (timeout?), reconnecting")
+            await self._connect_websocket()
 
     @traced_tts
     async def run_tts(self, text: str) -> AsyncGenerator[Frame, None]:
@@ -473,7 +478,7 @@ class CartesiaHttpTTSService(TTSService):
 
         Parameters:
             language: Language to use for synthesis.
-            speed: Voice speed control (string or float).
+            speed: Voice speed control.
             emotion: List of emotion controls.
 
                 .. deprecated:: 0.0.68
@@ -481,7 +486,7 @@ class CartesiaHttpTTSService(TTSService):
         """
 
         language: Optional[Language] = Language.EN
-        speed: Optional[Union[str, float]] = ""
+        speed: Optional[Literal["slow", "normal", "fast"]] = None
         emotion: Optional[List[str]] = Field(default_factory=list)
 
     def __init__(

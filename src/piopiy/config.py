@@ -3,4 +3,4 @@
 
 # Put your signaling URL here (no trailing slash)
 #SIGNALING_URL = "https://signaling.piopiy.ai"
-SIGNALING_URL = "http://localhost:3001"
+SIGNALING_URL = "http://192.168.0.139:3001"

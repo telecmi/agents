@@ -11,7 +11,6 @@ from typing import Awaitable, Callable, List
 
 from piopiy.frames.frames import Frame
 from piopiy.processors.frame_processor import FrameDirection, FrameProcessor
-from piopiy.utils.asyncio.watchdog_queue import WatchdogQueue
 
 
 async def identity_transformer(frame: Frame):
@@ -64,7 +63,7 @@ class ProducerProcessor(FrameProcessor):
         Returns:
             asyncio.Queue: The queue for the newly added consumer.
         """
-        queue = WatchdogQueue(self.task_manager)
+        queue = asyncio.Queue()
         self._consumers.append(queue)
         return queue
 
