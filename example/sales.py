@@ -1,4 +1,4 @@
-# user_bot.py
+# Sales CRM voice agent example
 import asyncio
 from piopiy.agent import Agent
 from piopiy.services.cartesia.tts import CartesiaTTSService
@@ -15,8 +15,8 @@ import os
 async def create_session():
    
    voice_agent = VoiceAgent(
-    instructions="You are a friendly AI assistant. Respond naturally and keep your answers conversational.",
-    greeting="Hello, how can I help you today?",
+    instructions="You are a proactive sales assistant for a CRM platform. Help manage customer relationships and promote our offerings.",
+    greeting="Hi there! Looking for a CRM solution? I'm here to help with sales questions.",
    )
 
    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
