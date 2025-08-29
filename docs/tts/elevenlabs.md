@@ -15,6 +15,7 @@ export ELEVENLABS_API_KEY=your_key
 - `params`: Provider specific options
 - `aggregate_sentences`: Aggregate sentences before synthesis (default `True`)
 
+
 ### Input Parameters
 
 - `language`: Language for synthesis
@@ -27,6 +28,7 @@ export ELEVENLABS_API_KEY=your_key
 - `enable_ssml_parsing`: Enable SSML parsing
 - `enable_logging`: Enable provider logging
 - `apply_text_normalization`: Text normalization mode
+
 
 ### Example
 

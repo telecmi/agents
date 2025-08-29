@@ -13,9 +13,11 @@ export LMNT_API_KEY=your_key
 - `language`: Language selection (default `Language.EN`)
 - `model`: Model name to use (default `"blizzard"`)
 
+
 ### Input Parameters
 
 None
+
 
 ### Example
 
