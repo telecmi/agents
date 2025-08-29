@@ -1,8 +1,8 @@
 # user_bot.py
 
 import asyncio
-from piopiy.agent import Agent
-from piopiy.pipeline.pipeline import Pipeline
+from piopiy import pipeline
+from piopiy.agent import Agent, current_room, current_token
 from piopiy.pipeline.runner import PipelineRunner
 from piopiy.pipeline.task import PipelineParams, PipelineTask
 from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
@@ -28,7 +28,16 @@ import os
 
 async def create_session():
     
-    transport = TelecmiTransport(params=TelecmiParams(audio_in_enabled=True,audio_out_enabled=True,vad_analyzer=SileroVADAnalyzer(),audio_out_sample_rate=24000))
+    
+
+
+    transport = TeleCMITransport(
+        params=TeleCMIParams(
+            audio_in_enabled=True,
+            audio_out_enabled=True,
+        )
+    )
+
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
     tts = CartesiaTTSService(
         api_key=os.getenv("CARTESIA_API_KEY"),
