@@ -109,7 +109,7 @@ class Agent:
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, lambda: asyncio.create_task(self.shutdown()))
-        print(self.signaling_url)
+        
         await self.sio.connect(
             self.signaling_url,
             auth={"agent_id": self.agent_id, "token": self.agent_token},
