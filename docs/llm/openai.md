@@ -10,8 +10,7 @@ import os
 from piopiy.services.openai.llm import OpenAILLMService
 from piopiy.services.openai.base_llm import BaseOpenAILLMService
 
-# gpt-4.1 is the default model; override with `model` if needed
-params = BaseOpenAILLMService.InputParams(
+
     temperature=0.7,
     top_p=0.9,
     frequency_penalty=0.5,
@@ -21,7 +20,6 @@ params = BaseOpenAILLMService.InputParams(
 
 service = OpenAILLMService(
     api_key=os.getenv("OPENAI_API_KEY"),
-    model="gpt-4o-mini",
     params=params,
 )
 ```
@@ -30,7 +28,6 @@ service = OpenAILLMService(
 
 `OpenAILLMService` accepts additional arguments:
 
-- `model`: OpenAI model name. Defaults to `gpt-4.1` but can be changed (e.g., `gpt-4o-mini`).
 - `base_url`: Custom API endpoint, useful for self-hosted proxies.
 - `organization` and `project`: IDs used for multi-tenant setups.
 - `default_headers`: Extra headers sent with each request.
