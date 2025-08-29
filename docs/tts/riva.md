@@ -17,6 +17,13 @@ export RIVA_API_KEY=your_key
         }`)
 - `params`: Provider specific options
 
+
+### Input Parameters
+
+- `language`: Language code for synthesis
+- `quality`: Audio quality setting
+
+
 ### Example
 
 ```python

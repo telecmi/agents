@@ -13,6 +13,10 @@ export XTTS_API_KEY=your_key
 - `language`: Language selection (default `Language.EN`)
 - `sample_rate`: Target audio sample rate
 
+### Input Parameters
+
+None
+
 ### Example
 
 ```python

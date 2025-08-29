@@ -19,6 +19,14 @@ export CARTESIA_API_KEY=your_key
 - `text_aggregator`: Custom text aggregator
 - `aggregate_sentences`: Aggregate sentences before synthesis (default `True`)
 
+
+### Input Parameters
+
+- `language`: Language for synthesis
+- `speed`: Voice speed control
+- `emotion`: List of emotion tags (deprecated)
+
+
 ### Example
 
 ```python

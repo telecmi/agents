@@ -14,6 +14,13 @@ export GROQ_API_KEY=your_key
 - `voice_id`: Voice identifier to use (default `"Celeste-PlayAI"`)
 - `sample_rate`: Target audio sample rate (default `GROQ_SAMPLE_RATE`)
 
+
+### Input Parameters
+
+- `language`: Language for synthesis
+- `speed`: Speech speed multiplier
+
+
 ### Example
 
 ```python

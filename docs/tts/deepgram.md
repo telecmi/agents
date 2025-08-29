@@ -13,6 +13,12 @@ export DEEPGRAM_API_KEY=your_key
 - `sample_rate`: Target audio sample rate
 - `encoding`: Audio encoding (default `"linear16"`)
 
+
+### Input Parameters
+
+None
+
+
 ### Example
 
 ```python
