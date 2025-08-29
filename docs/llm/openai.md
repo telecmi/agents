@@ -8,9 +8,9 @@ export OPENAI_API_KEY=your_key
 ```python
 import os
 from piopiy.services.openai.llm import OpenAILLMService
+from piopiy.services.openai.base_llm import BaseOpenAILLMService
 
 
-params = OpenAILLMService.InputParams(
     temperature=0.7,
     top_p=0.9,
     frequency_penalty=0.5,
@@ -27,7 +27,6 @@ service = OpenAILLMService(
 ### Optional Arguments
 
 `OpenAILLMService` accepts additional arguments:
-
 
 - `base_url`: Custom API endpoint, useful for self-hosted proxies.
 - `organization` and `project`: IDs used for multi-tenant setups.
