@@ -23,3 +23,25 @@ To run the test suite, install dependencies and execute:
 pytest
 ```
 
+## Running the Sales CRM Example
+
+1. Install the required dependencies:
+
+```bash
+pip install "piopiy-ai[openai,deepgram,cartesia,silero]" python-dotenv
+```
+
+2. Create a `.env` file with the following variables:
+   - `AGENT_ID`
+   - `AGENT_TOKEN`
+   - `DEEPGRAM_API_KEY`
+   - `OPENAI_API_KEY`
+   - `CARTESIA_API_KEY`
+3. Launch the voice agent:
+
+```bash
+python example/sales.py
+```
+
+This starts a sales-focused CRM assistant ready to handle customer queries.
+
