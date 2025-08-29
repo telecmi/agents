@@ -1,7 +1,9 @@
 # PIOPIY AI
 Build Telephonic-Grade Voice AI — WebRTC-Ready Framework
 
-PIOPIY AI is an all-in-one platform for creating telephony-ready voice agents. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity. The SDK plugs into your agent logic and supports many LLM, STT, and TTS providers so you can focus on conversation design.
+
+Piopiy AI is an all-in-one platform for creating telephony-ready voice agents. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity. The SDK plugs into your agent logic and supports many LLM, STT, and TTS providers so you can focus on conversation design.
+
 
 ## Installation
 
@@ -17,25 +19,27 @@ Install optional extras for any language model providers you use.
 
 Supported LLM providers:
 
-- Anthropic
-- AWS (Bedrock)
-- Azure
-- Cerebras
-- DeepSeek
-- Fireworks
-- Google
-- Grok
-- Groq
-- Mistral
-- NIM
-- Ollama
-- OpenAI
-- OpenPipe
-- OpenRouter
-- Perplexity
-- Qwen
-- Sambanova
-- Together
+
+- [Anthropic](docs/llm/anthropic.md)
+- [AWS (Bedrock)](docs/llm/aws.md)
+- [Azure](docs/llm/azure.md)
+- [Cerebras](docs/llm/cerebras.md)
+- [DeepSeek](docs/llm/deepseek.md)
+- [Fireworks](docs/llm/fireworks.md)
+- [Google](docs/llm/google.md)
+- [Grok](docs/llm/grok.md)
+- [Groq](docs/llm/groq.md)
+- [Mistral](docs/llm/mistral.md)
+- [NIM](docs/llm/nim.md)
+- [Ollama](docs/llm/ollama.md)
+- [OpenAI](docs/llm/openai.md)
+- [OpenPipe](docs/llm/openpipe.md)
+- [OpenRouter](docs/llm/openrouter.md)
+- [Perplexity](docs/llm/perplexity.md)
+- [Qwen](docs/llm/qwen.md)
+- [SambaNova](docs/llm/sambanova.md)
+- [Together](docs/llm/together.md)
+
 
 Set provider API keys in the environment (for example, `OPENAI_API_KEY`).
 
@@ -43,22 +47,24 @@ Set provider API keys in the environment (for example, `OPENAI_API_KEY`).
 
 Supported STT providers:
 
-- AssemblyAI
-- Azure
-- AWS
-- Cartesia
-- Deepgram
-- Fal
-- Gladia
-- Google
-- Groq
-- OpenAI
-- Riva
-- Sambanova
-- Soniox
-- Speechmatics
-- Ultravox
-- Whisper
+
+- [AssemblyAI](docs/stt/assemblyai.md)
+- [Azure](docs/stt/azure.md)
+- [AWS](docs/stt/aws.md)
+- [Cartesia](docs/stt/cartesia.md)
+- [Deepgram](docs/stt/deepgram.md)
+- [Fal](docs/stt/fal.md)
+- [Gladia](docs/stt/gladia.md)
+- [Google](docs/stt/google.md)
+- [Groq](docs/stt/groq.md)
+- [OpenAI](docs/stt/openai.md)
+- [Riva](docs/stt/riva.md)
+- [SambaNova](docs/stt/sambanova.md)
+- [Soniox](docs/stt/soniox.md)
+- [Speechmatics](docs/stt/speechmatics.md)
+- [Ultravox](docs/stt/ultravox.md)
+- [Whisper](docs/stt/whisper.md)
+
 
 Install the required extras and set their API keys (for example, `DEEPGRAM_API_KEY`).
 
@@ -66,28 +72,37 @@ Install the required extras and set their API keys (for example, `DEEPGRAM_API_K
 
 Supported TTS providers:
 
-- AsyncAI
-- AWS
-- Azure
-- Cartesia
-- Deepgram
-- ElevenLabs
-- Fish
-- Google
-- Groq
-- Inworld
-- LMNT
-- Minimax
-- Neuphonic
-- OpenAI
-- Piper
-- PlayHT
-- Rime
-- Riva
-- Sarvam
-- XTTS
+- [AsyncAI](docs/tts/asyncai.md)
+- [AWS](docs/tts/aws.md)
+- [Azure](docs/tts/azure.md)
+- [Cartesia](docs/tts/cartesia.md)
+- [Deepgram](docs/tts/deepgram.md)
+- [ElevenLabs](docs/tts/elevenlabs.md)
+- [Fish](docs/tts/fish.md)
+- [Google](docs/tts/google.md)
+- [Groq](docs/tts/groq.md)
+- [Inworld](docs/tts/inworld.md)
+- [LMNT](docs/tts/lmnt.md)
+- [Minimax](docs/tts/minimax.md)
+- [Neuphonic](docs/tts/neuphonic.md)
+- [OpenAI](docs/tts/openai.md)
+- [Piper](docs/tts/piper.md)
+- [PlayHT](docs/tts/playht.md)
+- [Rime](docs/tts/rime.md)
+- [Riva](docs/tts/riva.md)
+- [Sarvam](docs/tts/sarvam.md)
+- [XTTS](docs/tts/xtts.md)
 
 Install the required extras and set their API keys (for example, `CARTESIA_API_KEY`).
+
+### Transports
+
+Supported transports:
+
+
+- [TeleCMI](docs/transport/telecmi.md)
+
+
 
 ### Interruption & Silero VAD
 
