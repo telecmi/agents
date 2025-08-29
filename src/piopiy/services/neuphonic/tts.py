@@ -36,7 +36,6 @@ from piopiy.frames.frames import (
 from piopiy.processors.frame_processor import FrameDirection
 from piopiy.services.tts_service import InterruptibleTTSService, TTSService
 from piopiy.transcriptions.language import Language
-from piopiy.utils.asyncio.watchdog_async_iterator import WatchdogAsyncIterator
 from piopiy.utils.tracing.service_decorators import traced_tts
 
 try:
@@ -315,7 +314,7 @@ class NeuphonicTTSService(InterruptibleTTSService):
 
     async def _receive_messages(self):
         """Receive and process messages from Neuphonic WebSocket."""
-        async for message in WatchdogAsyncIterator(self._websocket, manager=self.task_manager):
+        async for message in self._websocket:
             if isinstance(message, str):
                 msg = json.loads(message)
                 if msg.get("data") and msg["data"].get("audio"):
@@ -327,9 +326,8 @@ class NeuphonicTTSService(InterruptibleTTSService):
 
     async def _keepalive_task_handler(self):
         """Handle keepalive messages to maintain WebSocket connection."""
-        KEEPALIVE_SLEEP = 10 if self.task_manager.task_watchdog_enabled else 3
+        KEEPALIVE_SLEEP = 10
         while True:
-            self.reset_watchdog()
             await asyncio.sleep(KEEPALIVE_SLEEP)
             await self._send_keepalive()
 

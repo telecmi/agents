@@ -67,7 +67,6 @@ from piopiy.services.openai.llm import (
     OpenAIUserContextAggregator,
 )
 from piopiy.transcriptions.language import Language
-from piopiy.utils.asyncio.watchdog_async_iterator import WatchdogAsyncIterator
 from piopiy.utils.string import match_endofsentence
 from piopiy.utils.time import time_now_iso8601
 from piopiy.utils.tracing.service_decorators import traced_gemini_live, traced_stt
@@ -929,7 +928,7 @@ class GeminiMultimodalLiveLLMService(LLMService):
 
     async def _receive_task_handler(self):
         """Handle incoming messages from the WebSocket connection."""
-        async for message in WatchdogAsyncIterator(self._websocket, manager=self.task_manager):
+        async for message in self._websocket:
             evt = events.parse_server_event(message)
             # logger.debug(f"Received event: {message[:500]}")
             # logger.debug(f"Received event: {evt}")

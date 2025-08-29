@@ -46,7 +46,6 @@ from piopiy.frames.frames import (
 )
 from piopiy.processors.frame_processor import FrameDirection, FrameProcessor
 from piopiy.transports.base_transport import TransportParams
-from piopiy.utils.asyncio.watchdog_priority_queue import WatchdogPriorityQueue
 from piopiy.utils.time import nanoseconds_to_seconds
 
 BOT_VAD_STOP_SECS = 0.35
@@ -436,9 +435,9 @@ class BaseOutputTransport(FrameProcessor):
             # also need to wait for these tasks before cancelling the video task
             # because it might be still rendering.
             if self._audio_task:
-                await self._transport.wait_for_task(self._audio_task)
+                await self._audio_task
             if self._clock_task:
-                await self._transport.wait_for_task(self._clock_task)
+                await self._clock_task
 
             # Stop audio mixer.
             if self._mixer:
@@ -626,10 +625,8 @@ class BaseOutputTransport(FrameProcessor):
                         frame = await asyncio.wait_for(
                             self._audio_queue.get(), timeout=vad_stop_secs
                         )
-                        self._transport.reset_watchdog()
                         yield frame
                     except asyncio.TimeoutError:
-                        self._transport.reset_watchdog()
                         # Notify the bot stopped speaking upstream if necessary.
                         await self._bot_stopped_speaking()
 
@@ -639,13 +636,11 @@ class BaseOutputTransport(FrameProcessor):
                 while True:
                     try:
                         frame = self._audio_queue.get_nowait()
-                        self._transport.reset_watchdog()
                         if isinstance(frame, OutputAudioRawFrame):
                             frame.audio = await self._mixer.mix(frame.audio)
                         last_frame_time = time.time()
                         yield frame
                     except asyncio.QueueEmpty:
-                        self._transport.reset_watchdog()
                         # Notify the bot stopped speaking upstream if necessary.
                         diff_time = time.time() - last_frame_time
                         if diff_time > vad_stop_secs:
@@ -827,15 +822,12 @@ class BaseOutputTransport(FrameProcessor):
         def _create_clock_task(self):
             """Create the clock/timing processing task."""
             if not self._clock_task:
-                self._clock_queue = WatchdogPriorityQueue(
-                    self._transport.task_manager, tuple_size=3
-                )
+                self._clock_queue = asyncio.PriorityQueue()
                 self._clock_task = self._transport.create_task(self._clock_task_handler())
 
         async def _cancel_clock_task(self):
             """Cancel and cleanup the clock processing task."""
             if self._clock_task:
-                self._clock_queue.cancel()
                 await self._transport.cancel_task(self._clock_task)
                 self._clock_task = None
 

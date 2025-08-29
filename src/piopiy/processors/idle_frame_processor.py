@@ -11,7 +11,6 @@ from typing import Awaitable, Callable, List, Optional
 
 from piopiy.frames.frames import Frame, StartFrame
 from piopiy.processors.frame_processor import FrameDirection, FrameProcessor
-from piopiy.utils.asyncio.watchdog_event import WatchdogEvent
 
 
 class IdleFrameProcessor(FrameProcessor):
@@ -78,7 +77,7 @@ class IdleFrameProcessor(FrameProcessor):
     def _create_idle_task(self):
         """Create and start the idle monitoring task."""
         if not self._idle_task:
-            self._idle_event = WatchdogEvent(self.task_manager)
+            self._idle_event = asyncio.Event()
             self._idle_task = self.create_task(self._idle_task_handler())
 
     async def _idle_task_handler(self):

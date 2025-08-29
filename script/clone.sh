@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
-# vendorize_pipecat.sh
-# Clone repo@ref, copy src/pipecat → src/piopiy (EXCLUDING transport/transports),
-# and rewrite code tokens 'pipecat' → 'piopiy' (imports & dotted uses only).
+
+# 1) Clone repo@ref
+# 2) Copy ALL of src/pipecat -> src/piopiy (no excludes)
+# 3) Rewrite tokens 'pipecat' -> 'piopiy' (imports & dotted uses only)
 
 set -euo pipefail
 
-### --- CONFIGURE (or pass as env) ---
+### --- CONFIG (override via env) ---
 REPO_URL="${REPO_URL:-https://github.com/pipecat-ai/pipecat.git}"
-REPO_REF="${REPO_REF:-v0.0.80}"                      # tag/branch/SHA
-TARGET_PROJECT_DIR="${TARGET_PROJECT_DIR:-$PWD}"     # your project root
+REPO_REF="${REPO_REF:-v0.0.82}"                  # tag/branch/SHA, or 'main' for latest
+TARGET_PROJECT_DIR="${TARGET_PROJECT_DIR:-$PWD}" # your project root
 SRC_SUBPATH="${SRC_SUBPATH:-src/pipecat}"
 DEST_SUBPATH="${DEST_SUBPATH:-src/piopiy}"
-# Exclude ALL transport/transports trees anywhere
-EXCLUDES="${EXCLUDES:-transport/**,transports/**,**/transport/**,**/transports/**}"
-RSYNC_DELETE="${RSYNC_DELETE:-0}"                    # set 1 to mirror
+RSYNC_DELETE="${RSYNC_DELETE:-0}"                # set 1 to mirror dest
 ### ----------------------------------
 
 need(){ command -v "$1" >/dev/null 2>&1 || { echo "Missing: $1" >&2; exit 1; }; }
@@ -25,19 +24,20 @@ if ! git clone --depth 1 --branch "$REPO_REF" "$REPO_URL" "$TMPDIR/repo" 2>/dev/
   git clone "$REPO_URL" "$TMPDIR/repo"
   ( cd "$TMPDIR/repo" && git checkout "$REPO_REF" )
 fi
+( cd "$TMPDIR/repo" && echo "   upstream commit: $(git rev-parse --short HEAD)" )
 [ -d "$TMPDIR/repo/$SRC_SUBPATH" ] || { echo "Missing $SRC_SUBPATH at $REPO_REF" >&2; exit 1; }
 
 DEST_PATH="$TARGET_PROJECT_DIR/$DEST_SUBPATH"
 mkdir -p "$DEST_PATH"
 
-echo "→ Copy $SRC_SUBPATH → $DEST_SUBPATH (excluding transport/transports)"
-IFS=',' read -r -a _EX <<< "$EXCLUDES"
-RSYNC_ARGS=(-a)
+echo "→ Copy EVERYTHING: $SRC_SUBPATH → $DEST_SUBPATH"
+RSYNC_ARGS=(-a)                           # keep perms/times
 [ "$RSYNC_DELETE" = "1" ] && RSYNC_ARGS+=(--delete)
-for pat in "${_EX[@]}"; do RSYNC_ARGS+=(--exclude "$pat"); done
+# (optional) skip pyc/caches while still “copying everything” useful
+RSYNC_ARGS+=(--exclude "__pycache__/")
 rsync "${RSYNC_ARGS[@]}" "$TMPDIR/repo/$SRC_SUBPATH/" "$DEST_PATH/"
 
-echo "→ Rewrite Python code tokens: pipecat → piopiy (imports & dotted uses only)"
+echo "→ Rewrite Python tokens: pipecat → piopiy (imports & dotted only)"
 python3 - <<'PY' "$DEST_PATH"
 import io, os, sys, tokenize
 root = sys.argv[1]
@@ -71,7 +71,7 @@ def rewrite(path: str):
             in_import = False
 
         if ttype == tokenize.NAME and tstr == 'pipecat':
-            # consider dotted use: pipecat.<x>
+            # only rewrite imports and dotted uses:  pipecat.xxx
             j = i + 1
             while j < len(toks) and toks[j].type in (tokenize.NL, tokenize.INDENT, tokenize.DEDENT):
                 j += 1
