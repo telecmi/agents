@@ -13,3 +13,4 @@ __pycache__/
 .env.*
 .tele/
 kia/
+cmi/

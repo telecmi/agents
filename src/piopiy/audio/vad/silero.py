@@ -1,5 +1,7 @@
 #
 # Copyright (c) 2024–2025, Daily
+
+# copyright (c) 2024-2025, TeleCMI
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -147,7 +149,7 @@ class SileroVADAnalyzer(VADAnalyzer):
         logger.debug("Loading Silero VAD model...")
 
         model_name = "silero_vad.onnx"
-        package_path = "pipecat.audio.vad.data"
+        package_path = "piopiy.audio.vad.data"
 
         try:
             import importlib_resources as impresources
