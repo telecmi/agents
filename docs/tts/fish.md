@@ -15,6 +15,16 @@ export FISH_API_KEY=your_key
 - `sample_rate`: Target audio sample rate
 - `params`: Provider specific options
 
+
+### Input Parameters
+
+- `language`: Language for synthesis
+- `latency`: Latency mode ("normal" or "balanced")
+- `normalize`: Whether to normalize audio output
+- `prosody_speed`: Speech speed multiplier
+- `prosody_volume`: Volume adjustment in dB
+
+
 ### Example
 
 ```python

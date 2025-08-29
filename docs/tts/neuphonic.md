@@ -15,6 +15,13 @@ export NEUPHONIC_API_KEY=your_key
 - `params`: Provider specific options
 - `aggregate_sentences`: Aggregate sentences before synthesis (default `True`)
 
+
+### Input Parameters
+
+- `language`: Language for synthesis
+- `speed`: Speech speed multiplier
+
+
 ### Example
 
 ```python

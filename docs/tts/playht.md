@@ -15,6 +15,14 @@ export PLAYHT_API_KEY=your_key
 - `output_format`: Output audio format (default `"wav"`)
 - `params`: Provider specific options
 
+
+### Input Parameters
+
+- `language`: Language for synthesis
+- `speed`: Speech speed multiplier
+- `seed`: Random seed for voice consistency
+
+
 ### Example
 
 ```python

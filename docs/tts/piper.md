@@ -11,6 +11,12 @@ export PIPER_API_KEY=your_key
 - `aiohttp_session`: Reuse existing aiohttp session
 - `sample_rate`: Target audio sample rate
 
+
+### Input Parameters
+
+None
+
+
 ### Example
 
 ```python

@@ -14,6 +14,12 @@ export OPENAI_API_KEY=your_key
 - `sample_rate`: Target audio sample rate
 - `instructions`: Guidance for synthesis
 
+
+### Input Parameters
+
+None
+
+
 ### Example
 
 ```python

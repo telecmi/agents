@@ -15,6 +15,16 @@ export SARVAM_API_KEY=your_key
 - `sample_rate`: Target audio sample rate
 - `params`: Provider specific options
 
+
+### Input Parameters
+
+- `language`: Language for synthesis
+- `pitch`: Voice pitch adjustment
+- `pace`: Speech pace multiplier
+- `loudness`: Volume multiplier
+- `enable_preprocessing`: Enable text preprocessing
+
+
 ### Example
 
 ```python
