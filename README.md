@@ -1,7 +1,9 @@
-# agents
+# PIOPIY AI
 Build Telephonic-Grade Voice AI — WebRTC-Ready Framework
 
+
 Piopiy AI is an all-in-one platform for creating telephony-ready voice agents. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity. The SDK plugs into your agent logic and supports many LLM, STT, and TTS providers so you can focus on conversation design.
+
 
 ## Installation
 
@@ -16,6 +18,7 @@ pip install piopiy-ai
 Install optional extras for any language model providers you use.
 
 Supported LLM providers:
+
 
 - [Anthropic](docs/llm/anthropic.md)
 - [AWS (Bedrock)](docs/llm/aws.md)
@@ -37,11 +40,13 @@ Supported LLM providers:
 - [SambaNova](docs/llm/sambanova.md)
 - [Together](docs/llm/together.md)
 
+
 Set provider API keys in the environment (for example, `OPENAI_API_KEY`).
 
 ### Speech-to-Text (STT)
 
 Supported STT providers:
+
 
 - [AssemblyAI](docs/stt/assemblyai.md)
 - [Azure](docs/stt/azure.md)
@@ -59,6 +64,7 @@ Supported STT providers:
 - [Speechmatics](docs/stt/speechmatics.md)
 - [Ultravox](docs/stt/ultravox.md)
 - [Whisper](docs/stt/whisper.md)
+
 
 Install the required extras and set their API keys (for example, `DEEPGRAM_API_KEY`).
 
@@ -93,12 +99,10 @@ Install the required extras and set their API keys (for example, `CARTESIA_API_K
 
 Supported transports:
 
-- [Local Audio](docs/transport/local.md)
-- [WebSocket](docs/transport/websocket.md)
-- [WebRTC](docs/transport/webrtc.md)
+
 - [TeleCMI](docs/transport/telecmi.md)
 
-Install extras for local, WebSocket, or WebRTC as needed.
+
 
 ### Interruption & Silero VAD
 
