@@ -8,10 +8,9 @@ export OPENAI_API_KEY=your_key
 ```python
 import os
 from piopiy.services.openai.llm import OpenAILLMService
-from piopiy.services.openai.base_llm import BaseOpenAILLMService
 
-# gpt-4.1 is the default model
-params = BaseOpenAILLMService.InputParams(
+
+params = OpenAILLMService.InputParams(
     temperature=0.7,
     top_p=0.9,
     frequency_penalty=0.5,
@@ -29,7 +28,7 @@ service = OpenAILLMService(
 
 `OpenAILLMService` accepts additional arguments:
 
-- `model`: OpenAI model name. Defaults to `gpt-4.1` but can be changed.
+
 - `base_url`: Custom API endpoint, useful for self-hosted proxies.
 - `organization` and `project`: IDs used for multi-tenant setups.
 - `default_headers`: Extra headers sent with each request.
