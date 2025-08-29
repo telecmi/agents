@@ -16,6 +16,7 @@ export INWORLD_API_KEY=your_key
 - `encoding`: Audio encoding (default `"LINEAR16"`)
 - `params`: Provider specific options
 
+
 ### Input Parameters
 
 - `temperature`: Voice temperature control

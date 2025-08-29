@@ -16,6 +16,7 @@ export MINIMAX_API_KEY=your_key
 - `sample_rate`: Target audio sample rate
 - `params`: Provider specific options
 
+
 ### Input Parameters
 
 - `language`: Language for synthesis
@@ -24,6 +25,7 @@ export MINIMAX_API_KEY=your_key
 - `pitch`: Pitch adjustment (-12 to 12)
 - `emotion`: Emotional tone (e.g., "happy", "sad")
 - `english_normalization`: Enable English text normalization
+
 
 ### Example
 

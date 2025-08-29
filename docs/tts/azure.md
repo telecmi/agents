@@ -13,6 +13,7 @@ export AZURE_API_KEY=your_key
 - `sample_rate`: Target audio sample rate
 - `params`: Provider specific options
 
+
 ### Input Parameters
 
 - `emphasis`: Emphasis level for speech
@@ -23,6 +24,7 @@ export AZURE_API_KEY=your_key
 - `style`: Speaking style
 - `style_degree`: Intensity of the speaking style
 - `volume`: Volume level
+
 
 ### Example
 

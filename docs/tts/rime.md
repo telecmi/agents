@@ -16,6 +16,7 @@ export RIME_API_KEY=your_key
 - `text_aggregator`: Custom text aggregator
 - `aggregate_sentences`: Aggregate sentences before synthesis (default `True`)
 
+
 ### Input Parameters
 
 - `language`: Language for synthesis
@@ -23,6 +24,7 @@ export RIME_API_KEY=your_key
 - `reduce_latency`: Reduce latency at potential quality cost
 - `pause_between_brackets`: Add pauses between bracketed content
 - `phonemize_between_brackets`: Phonemize bracketed content
+
 
 ### Example
 
