@@ -1,7 +1,7 @@
-# agents
+# PIOPIY AI
 Build Telephonic-Grade Voice AI — WebRTC-Ready Framework
 
-Piopiy AI is an all-in-one platform for creating telephony-ready voice agents. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity. The SDK plugs into your agent logic and supports many LLM, STT, and TTS providers so you can focus on conversation design.
+PIOPIY AI is an all-in-one platform for creating telephony-ready voice agents. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity. The SDK plugs into your agent logic and supports many LLM, STT, and TTS providers so you can focus on conversation design.
 
 ## Installation
 
