@@ -20,7 +20,7 @@ try:
     from .config import SIGNALING_URL as DEFAULT_SIGNALING_URL
 except Exception:
     # Fallback if config import isn't available
-    DEFAULT_SIGNALING_URL = "http://192.168.0.139:3001"
+    DEFAULT_SIGNALING_URL = "https://signaling.piopiy.com"
  
 
 class Agent:
@@ -105,7 +105,7 @@ class Agent:
                 except asyncio.CancelledError:
                     pass
 
-    async def start(self) -> None:
+    async def connect(self) -> None:
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, lambda: asyncio.create_task(self.shutdown()))

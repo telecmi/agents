@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piopiy-ai"
-version = "0.1.0"
-description = "Telephonic-Grade Voice AI — 🌐 WebRTC-ready framework"
+version = "0.3.0"
+description = "📞 Telephonic-Grade Voice AI — 🌐 WebRTC-ready framework"
 license = "BSD-2-Clause"
 license-files = ["LICENSE"]
 readme = "README.md"
@@ -169,7 +169,7 @@ ignore = [
 "**/__init__.py" = ["D104"]
 # Skip specific rules for generated protobuf files
 "**/*_pb2.py" = ["D"]
-"src/pipecat/services/__init__.py" = ["D"]
+"src/piopiy/services/__init__.py" = ["D"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
