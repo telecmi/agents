@@ -1,9 +1,7 @@
 # PIOPIY AI
 Build Telephonic-Grade Voice AI — WebRTC-Ready Framework
 
-
 Piopiy AI is an all-in-one platform for creating telephony-ready voice agents. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity. The SDK plugs into your agent logic and supports many LLM, STT, and TTS providers so you can focus on conversation design.
-
 
 ## Installation
 
@@ -13,96 +11,100 @@ Requires Python 3.10+.
 pip install piopiy-ai
 ```
 
-### LLM Providers
+To install extras for the providers you plan to use:
 
-Install optional extras for any language model providers you use.
-
-Supported LLM providers:
-
-
-- [Anthropic](docs/llm/anthropic.md)
-- [AWS (Bedrock)](docs/llm/aws.md)
-- [Azure](docs/llm/azure.md)
-- [Cerebras](docs/llm/cerebras.md)
-- [DeepSeek](docs/llm/deepseek.md)
-- [Fireworks](docs/llm/fireworks.md)
-- [Google](docs/llm/google.md)
-- [Grok](docs/llm/grok.md)
-- [Groq](docs/llm/groq.md)
-- [Mistral](docs/llm/mistral.md)
-- [NIM](docs/llm/nim.md)
-- [Ollama](docs/llm/ollama.md)
-- [OpenAI](docs/llm/openai.md)
-- [OpenPipe](docs/llm/openpipe.md)
-- [OpenRouter](docs/llm/openrouter.md)
-- [Perplexity](docs/llm/perplexity.md)
-- [Qwen](docs/llm/qwen.md)
-- [SambaNova](docs/llm/sambanova.md)
-- [Together](docs/llm/together.md)
-
+```bash
+pip install "piopiy-ai[cartesia,deepgram,openai]"
+```
 
 Set provider API keys in the environment (for example, `OPENAI_API_KEY`).
 
-### Speech-to-Text (STT)
+## Quick Example
 
-Supported STT providers:
+```python
+import asyncio
+import os
 
-
-- [AssemblyAI](docs/stt/assemblyai.md)
-- [Azure](docs/stt/azure.md)
-- [AWS](docs/stt/aws.md)
-- [Cartesia](docs/stt/cartesia.md)
-- [Deepgram](docs/stt/deepgram.md)
-- [Fal](docs/stt/fal.md)
-- [Gladia](docs/stt/gladia.md)
-- [Google](docs/stt/google.md)
-- [Groq](docs/stt/groq.md)
-- [OpenAI](docs/stt/openai.md)
-- [Riva](docs/stt/riva.md)
-- [SambaNova](docs/stt/sambanova.md)
-- [Soniox](docs/stt/soniox.md)
-- [Speechmatics](docs/stt/speechmatics.md)
-- [Ultravox](docs/stt/ultravox.md)
-- [Whisper](docs/stt/whisper.md)
+from piopiy.agent import Agent
+from piopiy.voice_agent import VoiceAgent
+from piopiy.services.deepgram.stt import DeepgramSTTService
+from piopiy.services.openai.llm import OpenAILLMService
+from piopiy.services.cartesia.tts import CartesiaTTSService
 
 
-Install the required extras and set their API keys (for example, `DEEPGRAM_API_KEY`).
+async def create_session():
+    voice_agent = VoiceAgent(
+        instructions="You are an advanced voice AI.",
+        greeting="Hello! How can I help you today?",
+    )
 
-### Text-to-Speech (TTS)
+    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
+    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
+    tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"))
 
-Supported TTS providers:
-
-- [AsyncAI](docs/tts/asyncai.md)
-- [AWS](docs/tts/aws.md)
-- [Azure](docs/tts/azure.md)
-- [Cartesia](docs/tts/cartesia.md)
-- [Deepgram](docs/tts/deepgram.md)
-- [ElevenLabs](docs/tts/elevenlabs.md)
-- [Fish](docs/tts/fish.md)
-- [Google](docs/tts/google.md)
-- [Groq](docs/tts/groq.md)
-- [Inworld](docs/tts/inworld.md)
-- [LMNT](docs/tts/lmnt.md)
-- [Minimax](docs/tts/minimax.md)
-- [Neuphonic](docs/tts/neuphonic.md)
-- [OpenAI](docs/tts/openai.md)
-- [Piper](docs/tts/piper.md)
-- [PlayHT](docs/tts/playht.md)
-- [Rime](docs/tts/rime.md)
-- [Riva](docs/tts/riva.md)
-- [Sarvam](docs/tts/sarvam.md)
-- [XTTS](docs/tts/xtts.md)
-
-Install the required extras and set their API keys (for example, `CARTESIA_API_KEY`).
-
-### Transports
-
-Supported transports:
+    await voice_agent.AgentAction(stt=stt, llm=llm, tts=tts)
+    await voice_agent.start()
 
 
-- [TeleCMI](docs/transport/telecmi.md)
+async def main():
+    agent = Agent(
+        agent_id=os.getenv("AGENT_ID"),
+        agent_token=os.getenv("AGENT_TOKEN"),
+        create_session=create_session,
+    )
+    await agent.connect()
 
 
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Providers
+
+| Provider | Categories |
+|---------|------------|
+| [Anthropic](docs/llm/anthropic.md) | LLM |
+| [AssemblyAI](docs/stt/assemblyai.md) | STT |
+| [AsyncAI](docs/tts/asyncai.md) | TTS |
+| [AWS](docs/llm/aws.md) | LLM, STT, TTS |
+| [Azure](docs/llm/azure.md) | LLM, STT, TTS |
+| [Cartesia](docs/stt/cartesia.md) | STT, TTS |
+| [Cerebras](docs/llm/cerebras.md) | LLM |
+| [Deepgram](docs/stt/deepgram.md) | STT, TTS |
+| [DeepSeek](docs/llm/deepseek.md) | LLM |
+| [ElevenLabs](docs/tts/elevenlabs.md) | TTS |
+| [Fal](docs/stt/fal.md) | STT |
+| [Fireworks](docs/llm/fireworks.md) | LLM |
+| [Fish](docs/tts/fish.md) | TTS |
+| [Gladia](docs/stt/gladia.md) | STT |
+| [Google](docs/llm/google.md) | LLM, STT, TTS |
+| [Grok](docs/llm/grok.md) | LLM |
+| [Groq](docs/llm/groq.md) | LLM, STT, TTS |
+| [Inworld](docs/tts/inworld.md) | TTS |
+| [LMNT](docs/tts/lmnt.md) | TTS |
+| [Mistral](docs/llm/mistral.md) | LLM |
+| [Minimax](docs/tts/minimax.md) | TTS |
+| [Neuphonic](docs/tts/neuphonic.md) | TTS |
+| [NIM](docs/llm/nim.md) | LLM |
+| [Ollama](docs/llm/ollama.md) | LLM |
+| [OpenAI](docs/llm/openai.md) | LLM, STT, TTS |
+| [OpenPipe](docs/llm/openpipe.md) | LLM |
+| [OpenRouter](docs/llm/openrouter.md) | LLM |
+| [Perplexity](docs/llm/perplexity.md) | LLM |
+| [Piper](docs/tts/piper.md) | TTS |
+| [PlayHT](docs/tts/playht.md) | TTS |
+| [Qwen](docs/llm/qwen.md) | LLM |
+| [Rime](docs/tts/rime.md) | TTS |
+| [Riva](docs/stt/riva.md) | STT, TTS |
+| [SambaNova](docs/llm/sambanova.md) | LLM, STT |
+| [Sarvam](docs/tts/sarvam.md) | TTS |
+| [Soniox](docs/stt/soniox.md) | STT |
+| [Speechmatics](docs/stt/speechmatics.md) | STT |
+| [TeleCMI](docs/transport/telecmi.md) | Transport |
+| [Together](docs/llm/together.md) | LLM |
+| [Ultravox](docs/stt/ultravox.md) | STT |
+| [Whisper](docs/stt/whisper.md) | STT |
+| [XTTS](docs/tts/xtts.md) | TTS |
 
 ### Interruption & Silero VAD
 
@@ -125,4 +127,3 @@ Connect phone calls in minutes using the Piopiy dashboard:
 No SIP setup or third-party telephony vendors are required—Piopiy handles the calls so you can focus on your agent logic.
 
 Thanks to Pepicat for making client SDK implementation easy.
-
