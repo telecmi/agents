@@ -1,4 +1,4 @@
-# Sales CRM voice agent example
+# CRM voice agent with function calling
 import asyncio
 import os
 from dotenv import load_dotenv

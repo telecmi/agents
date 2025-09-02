@@ -1,6 +1,11 @@
 # Examples
 
-The `sales.py` script demonstrates a complete voice agent using Piopiy AI.
+This directory contains runnable example scripts for Piopiy AI.
+
+- `sales.py` – complete voice agent.
+- `function_calling/` – showcases tool/function calling with:
+  - `crm.py`
+  - `weather.py`
 
 ## Install
 
@@ -22,8 +27,12 @@ export OPENAI_API_KEY=your_openai_key
 
 ## Run
 
+Choose an example to run:
+
 ```bash
 python sales.py
+python function_calling/crm.py
+python function_calling/weather.py
 ```
 
 Thanks to Pepicat for making SDK usage easy.
