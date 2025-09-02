@@ -2,5 +2,4 @@
 # SPDX-License-Identifier: BSD 2-Clause License
 
 # Put your signaling URL here (no trailing slash)
-#SIGNALING_URL = "https://signaling.piopiy.ai"
-SIGNALING_URL = "http://192.168.0.139:3001"
+SIGNALING_URL = "https://signaling.piopiy.com"

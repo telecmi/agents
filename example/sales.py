@@ -15,13 +15,20 @@ import os
 async def create_session():
    
    voice_agent = VoiceAgent(
-    instructions="You are a proactive sales assistant for a CRM platform. Help manage customer relationships and promote our offerings.",
-    greeting="Hi there! Looking for a CRM solution? I'm here to help with sales questions.",
+    instructions=(
+        "You are an advanced voice AI sales assistant for a CRM platform "
+        "Your role is to engage with potential customers understand their needs "
+        "and effectively communicate how our CRM solutions can address their challenges "
+        "Provide clear concise and persuasive information to help them make informed decisions "
+        "Always be courteous professional and ready to assist with any sales related inquiries"
+    ),
+    greeting="Hello Good Morning Welcome to TeleCMI, how can I help you today?"
    )
 
    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
    tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"), voice_id="bdab08ad-4137-4548-b9db-6142854c7525")
+   
    vad = SileroVADAnalyzer()
 
 
@@ -37,7 +44,7 @@ async def main():
         agent_token=os.getenv("AGENT_TOKEN"),
         create_session=create_session
     )
-    await agent.start()
+    await agent.connect()
 
 if __name__ == "__main__":
     print(os.getenv("AGENT_ID"))

@@ -1,9 +1,12 @@
 from __future__ import annotations
 import asyncio
-from typing import Any, Callable, List, Optional
+from asyncio.log import logger
+from typing import Any, Awaitable, Callable, List, Optional
 
+from piopiy.adapters.schemas.function_schema import FunctionSchema
+from piopiy.adapters.schemas.tools_schema import ToolsSchema
 from piopiy.audio.vad.silero import SileroVADAnalyzer
-from piopiy.frames.frames import TextFrame, BotSpeakingFrame, LLMFullResponseEndFrame
+from piopiy.frames.frames import TTSSpeakFrame, BotSpeakingFrame, LLMFullResponseEndFrame
 from piopiy.pipeline.pipeline import Pipeline
 from piopiy.pipeline.runner import PipelineRunner
 from piopiy.pipeline.task import PipelineParams, PipelineTask
@@ -18,39 +21,60 @@ try:
 except Exception:
     OpenAILLMContext = None  # type: ignore
 
+
 class VoiceAgent:
     def __init__(
         self,
         *,
         instructions: str,
-        tools: Optional[List[Any]] = None,
+        tools: Optional[List[FunctionSchema]] = None,  # optional; kept for back-compat
         mcp_client: Optional[Any] = None,
         greeting: Optional[str] = None,
         idle_timeout_secs: int = 60,
     ) -> None:
         self._instructions = instructions
         self._messages = [{"role": "system", "content": instructions}]
-        self._tools = tools or []
+        self._tools = tools or []  # legacy path; you can omit at callsite
         self._mcp_client = mcp_client
         self._greeting = greeting
         self._idle_timeout_secs = idle_timeout_secs
 
-        # components/config set by AgentAction()
-        self.transport: Optional[BaseTransport] = None
+        # Tool wiring
+        self._tool_handlers: dict[str, Callable[..., Awaitable[Any]]] = {}
+        self._tool_schemas: dict[str, FunctionSchema] = {}
+
+        # Components (populated by AgentAction)
+        self._transport: Optional[BaseTransport] = None
         self._stt: Optional[FrameProcessor] = None
         self._llm: Optional[FrameProcessor] = None
         self._tts: Optional[FrameProcessor] = None
         self._vad: Optional[FrameProcessor] = None
+
+        # Toggles
         self._enable_metrics = False
         self._enable_usage_metrics = False
         self._allow_interruptions = False
         self._interruption_strategy: Optional[BaseInterruptionStrategy] = None
 
-        # runtime fields (must exist to avoid AttributeError)
+        # Runtime
         self._task: Optional[PipelineTask] = None
         self._runner: Optional[PipelineRunner] = None
+        self.context_aggregator = None
+        self._processors: List[FrameProcessor] = []
+        self._pipe: Optional[Pipeline] = None
 
-    def AgentAction(
+    # ---- Tool APIs ----
+    def add_tool(self, schema: FunctionSchema, handler: Callable[..., Awaitable[Any]]) -> None:
+        """Register schema (model exposure) + handler (runtime) in one call."""
+        self._tool_schemas[schema.name] = schema
+        self._tool_handlers[schema.name] = handler
+
+    def register_tool(self, name: str, handler: Callable[..., Awaitable[Any]]) -> None:
+        """Back-compat: only provide a handler for a tool that was listed in tools=[...]."""
+        self._tool_handlers[name] = handler
+
+    # ---- Configuration ----
+    async def AgentAction(
         self,
         *,
         stt: FrameProcessor,
@@ -60,7 +84,7 @@ class VoiceAgent:
         enable_metrics: bool = True,
         enable_usage_metrics: bool = True,
         allow_interruptions: bool = True,
-        interruption_strategy: Optional[BaseInterruptionStrategy] = None,  # e.g., MinWordsInterruptionStrategy(min_words=1)
+        interruption_strategy: Optional[BaseInterruptionStrategy] = None,
         telecmi_params: Optional[TelecmiParams] = None,
     ) -> None:
         """Store components and toggles; pipeline is built in start()."""
@@ -78,44 +102,71 @@ class VoiceAgent:
             telecmi_params = TelecmiParams(
                 audio_in_enabled=True,
                 audio_out_enabled=True,
-                audio_out_sample_rate=24000,
+                audio_out_sample_rate=8000,
+                audio_in_sample_rate=16000,
                 vad_analyzer=(self._vad if isinstance(self._vad, SileroVADAnalyzer) else None),
             )
-        self.transport = TelecmiTransport(params=telecmi_params)
+        self._transport = TelecmiTransport(params=telecmi_params)
 
+    # ---- Pipeline build & run ----
     async def _build_task(self) -> None:
         """Assemble Pipeline + Task (must be awaited before run)."""
-        if not (self.transport and self._stt and self._llm and self._tts):
+        if not (self._transport and self._stt and self._llm and self._tts):
             raise RuntimeError("Call AgentAction(...) before start(). Missing components.")
 
-        transport = self.transport
-        processors: List[FrameProcessor] = [transport.input()]
+        self._processors = [self._transport.input(), self._stt]
 
-        # NOTE: VAD is typically handled inside TelecmiParams via vad_analyzer.
-        # If you also have a standalone VAD processor, you can insert it here:
-        # if self._vad and not isinstance(self._vad, SileroVADAnalyzer):
-        #     processors.append(self._vad)
+        # Consolidate tool schemas from add_tool() and (optionally) ctor tools=[...]
+        tool_schemas: List[FunctionSchema] = list(self._tool_schemas.values())
+        if self._tools:
+            names = {s.name for s in tool_schemas}
+            tool_schemas.extend([s for s in self._tools if s.name not in names])
 
-        processors.append(self._stt)
-
-        context_aggregator = None
+        # Advertise tools to the model via OpenAI context (if available)
         if OpenAILLMContext and hasattr(self._llm, "create_context_aggregator"):
-            ctx = OpenAILLMContext(self._messages)
-            context_aggregator = self._llm.create_context_aggregator(ctx)
-            processors.append(context_aggregator.user())
+            tools_schema = ToolsSchema(standard_tools=tool_schemas) if tool_schemas else None
+            ctx = OpenAILLMContext(self._messages, tools_schema) if tools_schema else OpenAILLMContext(self._messages)
+            self.context_aggregator = self._llm.create_context_aggregator(ctx)
+            self._processors.append(self.context_aggregator.user())
 
+        # Register runtime handlers with the LLM service
+        # Prefer NAME-based first (Daily/Pipecat style), then fall back to schema-based.
+        by_name = {s.name: s for s in tool_schemas}
+
+        if hasattr(self._llm, "register_function"):
+            for name, fn in self._tool_handlers.items():
+                try:
+                    # Most Pipecat builds: (name: str, handler)
+                    self._llm.register_function(name, fn)
+                except TypeError:
+                    # Some variants: (schema: FunctionSchema, handler)
+                    schema = by_name.get(name)
+                    if schema:
+                        self._llm.register_function(schema, fn)
+
+        elif hasattr(self._llm, "register_tool"):
+            for name, fn in self._tool_handlers.items():
+                try:
+                    # Common: (name: str, handler)
+                    self._llm.register_tool(name, fn)
+                except TypeError:
+                    # Others: (schema: FunctionSchema, handler)
+                    schema = by_name.get(name)
+                    if schema:
+                        self._llm.register_tool(schema, fn)
+        else:
+            raise RuntimeError("LLMService missing register_function/register_tool")
+
+        # MCP tools (optional)
         if self._mcp_client:
             await self._mcp_client.register_tools(self._llm)
 
-        if self._tools and hasattr(self._llm, "register_function"):
-            for name, handler in self._tools:
-                self._llm.register_function(name, handler)
+        # Finish processor chain
+        self._processors.extend([self._llm, self._tts, self._transport.output()])
+        if self.context_aggregator:
+            self._processors.append(self.context_aggregator.assistant())
 
-        processors.extend([self._llm, self._tts, transport.output()])
-        if context_aggregator:
-            processors.append(context_aggregator.assistant())
-
-        pipe = Pipeline(processors)
+        self._pipe = Pipeline(self._processors)
 
         params = PipelineParams(
             enable_metrics=self._enable_metrics,
@@ -130,19 +181,18 @@ class VoiceAgent:
             cancel_on_idle_timeout=True,
         )
 
-        self._task = PipelineTask(pipe, params=params)
+        self._task = PipelineTask(self._pipe, params=params)
         self._runner = PipelineRunner(handle_sigint=False)
 
-        # events
-        @transport.event_handler("on_first_participant_joined")
+        # ---- Transport events ----
+        @self._transport.event_handler("on_first_participant_joined")
         async def _greet(_, _pid):
-            if self._greeting:
-                await asyncio.sleep(1)
-                if self._task:
-                    if isinstance(self._greeting, str):
-                     await self._task.queue_frame(TextFrame(self._greeting))
+            if self._greeting and self._task:
+                await asyncio.sleep(0.5)
+                logger.error(f"Greeting: {self._greeting}")
+                await self._task.queue_frame(TTSSpeakFrame(self._greeting))
 
-        @transport.event_handler("on_participant_disconnected")
+        @self._transport.event_handler("on_participant_disconnected")
         async def _left(_, __):
             if self._task:
                 await self._task.cancel()
