@@ -7,6 +7,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.ruff_cache/
 
 # Ignore environment files (e.g., .env for dotenv) anywhere
 .env
@@ -15,3 +17,18 @@ __pycache__/
 kia/
 cmi/
 dist/
+
+# packaging
+dist/
+build/
+*.egg-info/
+
+
+
+# python
+__pycache__/
+*.pyc
+
+# venvs
+.venv/
+.env/
