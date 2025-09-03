@@ -38,3 +38,5 @@ class DeprecatedModuleProxy:
         if attr in self._globals:
             return _warn_deprecated_access(self._globals, attr, self._old, self._new)
         raise AttributeError(f"module 'pipecat.services.{self._old}' has no attribute '{attr}'")
+
+# from . import kokoro

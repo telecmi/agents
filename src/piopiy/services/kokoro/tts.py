@@ -13,7 +13,7 @@ from typing import AsyncGenerator, List, Optional, Union
 from loguru import logger
 from pydantic import BaseModel
 
-from pipecat.frames.frames import (
+from piopiy.frames.frames import (
     BotStoppedSpeakingFrame,
     CancelFrame,
     EndFrame,
@@ -27,13 +27,14 @@ from pipecat.frames.frames import (
     TTSStartedFrame,
     TTSStoppedFrame,
 )
-from pipecat.processors.frame_processor import FrameDirection
-from pipecat.services.ai_services import AudioContextWordTTSService, TTSService
-from pipecat.services.websocket_service import WebsocketService
-from pipecat.transcriptions.language import Language
-from misaki import espeak #pip install misaki
-from misaki.espeak import EspeakG2P
+from piopiy.processors.frame_processor import FrameDirection
+from piopiy.services.ai_services import AudioContextWordTTSService, TTSService
+from piopiy.services.websocket_service import WebsocketService
+from piopiy.transcriptions.language import Language
+# from misaki import espeak #pip install misaki
+# from misaki.espeak import EspeakG2P
 
+from piopiy.utils.tracing.service_decorators import traced_tts
 
 # See .env.example for Cartesia configuration needed
 try:
@@ -41,7 +42,7 @@ try:
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use Cartesia, you need to `pip install pipecat-ai[cartesia]`. Also, set `CARTESIA_API_KEY` environment variable."
+        "In order to use Cartesia, you need to `pip install piopiy-ai[cartesia]`. Also, set `CARTESIA_API_KEY` environment variable."
     )
     raise Exception(f"Missing module: {e}")
 
@@ -56,7 +57,7 @@ except ModuleNotFoundError as e:
 
 
 def language_to_kokoro_language(language: Language) -> Optional[str]:
-    """Convert pipecat Language to Kokoro language code."""
+    """Convert piopiy Language to Kokoro language code."""
     BASE_LANGUAGES = {
         Language.EN: "en-us",
         # Add more language mappings as supported by Kokoro
@@ -125,9 +126,10 @@ class KokoroTTSService(TTSService):
         return True
 
     def language_to_service_language(self, language: Language) -> Optional[str]:
-        """Convert pipecat language to Kokoro language code."""
+        """Convert piopiy language to Kokoro language code."""
         return language_to_kokoro_language(language)
 
+    @traced_tts
     async def run_tts(self, text: str) -> AsyncGenerator[Frame, None]:
         """Generate speech from text using Kokoro in a streaming fashion.
         
@@ -147,10 +149,11 @@ class KokoroTTSService(TTSService):
             logger.info(f"Creating stream")
             
             if self._settings["language"] == "hi":
-                g2p = EspeakG2P(language=self._settings["language"])
+                # g2p = EspeakG2P(language=self._settings["language"])
                 # text = "सपने वो नहीं जो हम सोते समय देखते हैं, सपने वो हैं जो हमें सोने नहीं देते।"
-                text, _ = g2p(text)
-                self.is_phonemes = True
+                # text, _ = g2p(text)
+                # self.is_phonemes = True
+                pass
 
             stream = self._kokoro.create_stream(
                 text,
