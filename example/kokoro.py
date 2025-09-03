@@ -149,6 +149,8 @@ class KokoroTTSService(TTSService):
             logger.info(f"Creating stream")
             
             if self._settings["language"] == "hi":
+
+                #phonemizing hindi text will be added
                 # g2p = EspeakG2P(language=self._settings["language"])
                 # text = "सपने वो नहीं जो हम सोते समय देखते हैं, सपने वो हैं जो हमें सोने नहीं देते।"
                 # text, _ = g2p(text)
