@@ -61,50 +61,51 @@ if __name__ == "__main__":
 
 ## Providers
 
-| Provider | Categories |
-|---------|------------|
-| [Anthropic](docs/llm/anthropic.md) | LLM |
-| [AssemblyAI](docs/stt/assemblyai.md) | STT |
-| [AsyncAI](docs/tts/asyncai.md) | TTS |
-| [AWS](docs/llm/aws.md) | LLM, STT, TTS |
-| [Azure](docs/llm/azure.md) | LLM, STT, TTS |
-| [Cartesia](docs/stt/cartesia.md) | STT, TTS |
-| [Cerebras](docs/llm/cerebras.md) | LLM |
-| [Deepgram](docs/stt/deepgram.md) | STT, TTS |
-| [DeepSeek](docs/llm/deepseek.md) | LLM |
-| [ElevenLabs](docs/tts/elevenlabs.md) | TTS |
-| [Fal](docs/stt/fal.md) | STT |
-| [Fireworks](docs/llm/fireworks.md) | LLM |
-| [Fish](docs/tts/fish.md) | TTS |
-| [Gladia](docs/stt/gladia.md) | STT |
-| [Google](docs/llm/google.md) | LLM, STT, TTS |
-| [Grok](docs/llm/grok.md) | LLM |
-| [Groq](docs/llm/groq.md) | LLM, STT, TTS |
-| [Inworld](docs/tts/inworld.md) | TTS |
-| [LMNT](docs/tts/lmnt.md) | TTS |
-| [Mistral](docs/llm/mistral.md) | LLM |
-| [Minimax](docs/tts/minimax.md) | TTS |
-| [Neuphonic](docs/tts/neuphonic.md) | TTS |
-| [NIM](docs/llm/nim.md) | LLM |
-| [Ollama](docs/llm/ollama.md) | LLM |
-| [OpenAI](docs/llm/openai.md) | LLM, STT, TTS |
-| [OpenPipe](docs/llm/openpipe.md) | LLM |
-| [OpenRouter](docs/llm/openrouter.md) | LLM |
-| [Perplexity](docs/llm/perplexity.md) | LLM |
-| [Piper](docs/tts/piper.md) | TTS |
-| [PlayHT](docs/tts/playht.md) | TTS |
-| [Qwen](docs/llm/qwen.md) | LLM |
-| [Rime](docs/tts/rime.md) | TTS |
-| [Riva](docs/stt/riva.md) | STT, TTS |
-| [SambaNova](docs/llm/sambanova.md) | LLM, STT |
-| [Sarvam](docs/tts/sarvam.md) | TTS |
-| [Soniox](docs/stt/soniox.md) | STT |
-| [Speechmatics](docs/stt/speechmatics.md) | STT |
-| [TeleCMI](docs/transport/telecmi.md) | Transport |
-| [Together](docs/llm/together.md) | LLM |
-| [Ultravox](docs/stt/ultravox.md) | STT |
-| [Whisper](docs/stt/whisper.md) | STT |
-| [XTTS](docs/tts/xtts.md) | TTS |
+| Provider | STT | LLM | TTS | Memory | Other |
+|---------|-----|-----|-----|--------|-------|
+| [Anthropic](docs/llm/anthropic.md) |  | 😊 |  |  |  |
+| [AssemblyAI](docs/stt/assemblyai.md) | 😊 |  |  |  |  |
+| [AsyncAI](docs/tts/asyncai.md) |  |  | 😊 |  |  |
+| [AWS](docs/llm/aws.md) | 😊 | 😊 | 😊 |  |  |
+| [Azure](docs/llm/azure.md) | 😊 | 😊 | 😊 |  |  |
+| [Cartesia](docs/stt/cartesia.md) | 😊 |  | 😊 |  |  |
+| [Cerebras](docs/llm/cerebras.md) |  | 😊 |  |  |  |
+| [Deepgram](docs/stt/deepgram.md) | 😊 |  | 😊 |  |  |
+| [DeepSeek](docs/llm/deepseek.md) |  | 😊 |  |  |  |
+| [ElevenLabs](docs/tts/elevenlabs.md) |  |  | 😊 |  |  |
+| [Fal](docs/stt/fal.md) | 😊 |  |  |  |  |
+| [Fireworks](docs/llm/fireworks.md) |  | 😊 |  |  |  |
+| [Fish](docs/tts/fish.md) |  |  | 😊 |  |  |
+| [Gladia](docs/stt/gladia.md) | 😊 |  |  |  |  |
+| [Google](docs/llm/google.md) | 😊 | 😊 | 😊 |  |  |
+| [Grok](docs/llm/grok.md) |  | 😊 |  |  |  |
+| [Groq](docs/llm/groq.md) | 😊 | 😊 | 😊 |  |  |
+| [Inworld](docs/tts/inworld.md) |  |  | 😊 |  |  |
+| [LMNT](docs/tts/lmnt.md) |  |  | 😊 |  |  |
+| [Mistral](docs/llm/mistral.md) |  | 😊 |  |  |  |
+| [Minimax](docs/tts/minimax.md) |  |  | 😊 |  |  |
+| [Neuphonic](docs/tts/neuphonic.md) |  |  | 😊 |  |  |
+| [NIM](docs/llm/nim.md) |  | 😊 |  |  |  |
+| [Ollama](docs/llm/ollama.md) |  | 😊 |  |  |  |
+| [OpenAI](docs/llm/openai.md) | 😊 | 😊 | 😊 |  |  |
+| [OpenPipe](docs/llm/openpipe.md) |  | 😊 |  |  |  |
+| [OpenRouter](docs/llm/openrouter.md) |  | 😊 |  |  |  |
+| [Perplexity](docs/llm/perplexity.md) |  | 😊 |  |  |  |
+| [Piper](docs/tts/piper.md) |  |  | 😊 |  |  |
+| [PlayHT](docs/tts/playht.md) |  |  | 😊 |  |  |
+| [Qwen](docs/llm/qwen.md) |  | 😊 |  |  |  |
+| [Rime](docs/tts/rime.md) |  |  | 😊 |  |  |
+| [Riva](docs/stt/riva.md) | 😊 |  | 😊 |  |  |
+| [SambaNova](docs/llm/sambanova.md) | 😊 | 😊 |  |  |  |
+| [Sarvam](docs/tts/sarvam.md) |  |  | 😊 |  |  |
+| [Soniox](docs/stt/soniox.md) | 😊 |  |  |  |  |
+| [Speechmatics](docs/stt/speechmatics.md) | 😊 |  |  |  |  |
+| [TeleCMI](docs/transport/telecmi.md) |  |  |  |  | 😊 |
+| [Together](docs/llm/together.md) |  | 😊 |  |  |  |
+| [Ultravox](docs/stt/ultravox.md) | 😊 |  |  |  |  |
+| [Whisper](docs/stt/whisper.md) | 😊 |  |  |  |  |
+| [XTTS](docs/tts/xtts.md) |  |  | 😊 |  |  |
+| [Endor](docs/endor.md) | 😊 | 😊 | 😊 | 😊 | 😊 |
 
 ### Interruption & Silero VAD
 
