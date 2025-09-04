@@ -14,7 +14,7 @@ dotenv.load_dotenv()
 
 async def create_session():
     voice_agent = VoiceAgent(
-        instructions="You are an Sales voice AI Agent.Your task is to sell Voice AI agent product to the customer.",
+        instructions="You are a sales voice AI agent. Your task is to sell the Voice AI agent product to the customer.",
         greeting="Hello! How can I help you today?",
     )
 
