@@ -15,6 +15,7 @@ from piopiy.audio.interruptions.base_interruption_strategy import BaseInterrupti
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.transports.base_transport import BaseTransport
 from piopiy.transports.services.telecmi import TelecmiParams, TelecmiTransport
+from piopiy.services.mcp_service import MCPClient
 
 try:
     from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
@@ -28,14 +29,12 @@ class VoiceAgent:
         *,
         instructions: str,
         tools: Optional[List[FunctionSchema]] = None,  # optional; kept for back-compat
-        mcp_client: Optional[Any] = None,
         greeting: Optional[str] = None,
         idle_timeout_secs: int = 60,
     ) -> None:
         self._instructions = instructions
         self._messages = [{"role": "system", "content": instructions}]
         self._tools = tools or []  # legacy path; you can omit at callsite
-        self._mcp_client = mcp_client
         self._greeting = greeting
         self._idle_timeout_secs = idle_timeout_secs
 
@@ -80,6 +79,7 @@ class VoiceAgent:
         stt: FrameProcessor,
         llm: FrameProcessor,
         tts: FrameProcessor,
+        mcp_tools: Optional[Any] = None,
         vad: Optional[FrameProcessor] = None,  # pass SileroVADAnalyzer() to enable, or None to disable
         enable_metrics: bool = True,
         enable_usage_metrics: bool = True,
@@ -96,6 +96,8 @@ class VoiceAgent:
         self._enable_usage_metrics = enable_usage_metrics
         self._allow_interruptions = allow_interruptions
         self._interruption_strategy = interruption_strategy
+
+        self._mcp_client = mcp_tools or None
 
         # Build transport now (VAD goes into TelecmiParams.vad_analyzer)
         if telecmi_params is None:
@@ -126,6 +128,8 @@ class VoiceAgent:
         if OpenAILLMContext and hasattr(self._llm, "create_context_aggregator"):
             tools_schema = ToolsSchema(standard_tools=tool_schemas) if tool_schemas else None
             ctx = OpenAILLMContext(self._messages, tools_schema) if tools_schema else OpenAILLMContext(self._messages)
+            if self._mcp_client:
+                ctx = OpenAILLMContext(self._messages, tools=self._mcp_client) if self._mcp_client else OpenAILLMContext(self._messages)
             self.context_aggregator = self._llm.create_context_aggregator(ctx)
             self._processors.append(self.context_aggregator.user())
 
@@ -157,9 +161,7 @@ class VoiceAgent:
         else:
             raise RuntimeError("LLMService missing register_function/register_tool")
 
-        # MCP tools (optional)
-        if self._mcp_client:
-            await self._mcp_client.register_tools(self._llm)
+        
 
         # Finish processor chain
         self._processors.extend([self._llm, self._tts, self._transport.output()])

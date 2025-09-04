@@ -34,7 +34,6 @@ async def create_session():
 
     #KokoroTTS
     tts = KokoroTTSService(
-
         model_type = "normal", #or "int8-gpu" or "int8-cpu"
         voice_id = "af_sarah",
         is_phonemes = False,
