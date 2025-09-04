@@ -1,18 +1,18 @@
 # Sales CRM voice agent example
 import asyncio
-from piopiy.agent import Agent
-from piopiy.services.deepgram.stt import DeepgramSTTService
-from piopiy.services.openai.llm import OpenAILLMService
-from piopiy.voice_agent import VoiceAgent
+import os
+
 from dotenv import load_dotenv
+from piopiy.agent import Agent
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.audio.vad.silero import SileroVADAnalyzer
+from piopiy.services.deepgram.stt import DeepgramSTTService
+from piopiy.services.openai.llm import OpenAILLMService
+from piopiy.services.opensource.kokoro import KokoroTTSService
 from piopiy.transcriptions.language import Language
-from piopyi.services.opensource.kokoro import KokoroTTSService
-
+from piopiy.voice_agent import VoiceAgent
 
 load_dotenv()
-import os
 
 async def create_session():
    
@@ -54,8 +54,8 @@ async def create_session():
 
 async def main():
     agent = Agent(
-        agent_id="AGENT_ID",
-        agent_token="AGENT_TOKEN",
+        agent_id=os.getenv("AGENT_ID"),
+        agent_token=os.getenv("AGENT_TOKEN"),
         create_session=create_session
     )
     await agent.connect()
