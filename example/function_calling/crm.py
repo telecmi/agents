@@ -117,5 +117,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    print("AGENT_ID:", os.getenv("AGENT_ID"))
     asyncio.run(main())
