@@ -3,10 +3,8 @@
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
-
-import base64
-import json
-import uuid
+import os
+import urllib.request
 import numpy as np
 from typing import AsyncGenerator, List, Optional, Union
 
@@ -40,6 +38,41 @@ except ModuleNotFoundError as e:
         "In order to use Kokoro, you need to `pip install kokoro-onnx`. Also, download the model files from the Kokoro repository."
     )
     raise Exception(f"Missing module: {e}")
+
+def download_if_missing(url: str, local_path: str):
+    """Download file if not already present."""
+    if not os.path.exists(local_path):
+        logger.info(f"Downloading {url} -> {local_path}")
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        urllib.request.urlretrieve(url, local_path)
+    else:
+        logger.info(f"File already exists: {local_path}")
+    return local_path
+
+
+def get_kokoro_model_paths(model_type: str):
+    """Return model_path and voices_path based on type."""
+    base_dir = os.path.join(os.getcwd(), "kokoro_models")
+    os.makedirs(base_dir, exist_ok=True)
+
+    voices_url = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin"
+    voices_path = download_if_missing(voices_url, os.path.join(base_dir, "voices-v1.0.bin"))
+
+    if model_type == "normal":
+        model_url = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx"
+        model_path = download_if_missing(model_url, os.path.join(base_dir, "kokoro-v1.0.onnx"))
+    elif model_type == "int8-cpu":
+        model_url = "https://github.com/taylorchu/kokoro-onnx/releases/download/v0.2.0/kokoro-quant-convinteger.onnx"
+        model_path = download_if_missing(model_url, os.path.join(base_dir, "kokoro-quant-convinteger.onnx"))
+    elif model_type == "int8-gpu":
+        model_url = "https://github.com/taylorchu/kokoro-onnx/releases/download/v0.2.0/kokoro-quant-gpu.onnx"
+        model_path = download_if_missing(model_url, os.path.join(base_dir, "kokoro-quant-gpu.onnx"))
+    else:
+        raise ValueError(f"Invalid model_type '{model_type}', use: normal | int8-cpu | int8-gpu")
+
+    return model_path, voices_path
+
+
 
 
 def language_to_kokoro_language(language: Language) -> Optional[str]:
@@ -76,8 +109,8 @@ class KokoroTTSService(TTSService):
     def __init__(
         self,
         *,
-        model_path: str,
-        voices_path: str,
+        model_type: str = "normal", #or "int8-gpu" or "int8-cpu"
+        # voices_path: str,
         voice_id: str = "af_sarah",
         sample_rate: Optional[int] = None,
         is_phonemes: bool = False,
@@ -94,7 +127,11 @@ class KokoroTTSService(TTSService):
             params: Additional configuration parameters
         """
         super().__init__(sample_rate=sample_rate, **kwargs)
+
+        # Fetch paths based on type
+        model_path, voices_path = get_kokoro_model_paths(model_type)
         logger.info(f"Initializing Kokoro TTS service with model_path: {model_path} and voices_path: {voices_path}")
+
         self._kokoro = Kokoro(model_path, voices_path)
         self.is_phonemes = is_phonemes
         logger.info(f"Kokoro initialized")
