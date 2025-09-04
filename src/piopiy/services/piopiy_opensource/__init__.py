@@ -1,1 +1,0 @@
-# piopiy.services.piopiy_opensource package

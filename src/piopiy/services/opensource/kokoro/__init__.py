@@ -1,4 +1,4 @@
-# piopiy/services/piopiy_opensource/kokoro/__init__.py
+# piopiy/services/opensource/kokoro/__init__.py
 
 from .tts import *   # load KokoroTTSService and others into namespace
 

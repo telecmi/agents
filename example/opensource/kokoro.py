@@ -10,7 +10,7 @@ from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsI
 from piopiy.audio.vad.silero import SileroVADAnalyzer
 from piopiy.transcriptions.language import Language
 
-from piopyi.services.piopyi_opensource.kokoro import KokoroTTSService
+from piopyi.services.opensource.kokoro import KokoroTTSService
 # from piopyi.services.piopyi_opensource.chatterbox import ChatterboxTTSService
 
 load_dotenv()
