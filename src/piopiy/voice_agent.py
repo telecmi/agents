@@ -15,7 +15,6 @@ from piopiy.audio.interruptions.base_interruption_strategy import BaseInterrupti
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.transports.base_transport import BaseTransport
 from piopiy.transports.services.telecmi import TelecmiParams, TelecmiTransport
-from piopiy.services.mcp_service import MCPClient
 
 try:
     from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
