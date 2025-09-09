@@ -65,6 +65,14 @@ inworld = []
 krisp = [ "pipecat-ai-krisp~=0.4.0" ]
 koala = [ "pvkoala~=2.0.3" ]
 kokoro = ["kokoro-onnx"]
+[scripts.kokoro]
+install = [
+    "wget https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx",
+    "wget https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin",
+    "mv kokoro-v1.0.onnx src/piopiy/services/opensource/kokoro/data/kokoro-v1.0.onnx",
+    "mv voices-v1.0.bin src/piopiy/services/opensource/kokoro/data/voices-v1.0.bin"
+]
+
 langchain = [ "langchain~=0.3.20", "langchain-community~=0.3.20", "langchain-openai~=0.3.9" ]
 lmnt = [ "websockets>=13.1,<15.0" ]
 local = [ "pyaudio~=0.2.14" ]
