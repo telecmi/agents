@@ -8,7 +8,7 @@ from piopiy.voice_agent import VoiceAgent
 from dotenv import load_dotenv
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.audio.vad.silero import SileroVADAnalyzer
-from piopiy.services.opensource.chatterbox import ChatterboxTTSService
+from piopiy.services.opensource.chatterbox import ChatterboxTTSService, ChatterboxMultilingualTTSService
 load_dotenv()
 
 

@@ -25,7 +25,7 @@ from piopiy.transcriptions.language import Language
 from piopiy.utils.tracing.service_decorators import traced_tts
 
 try:
-    from chatterbox.mtl_tts import ChatterboxMultilingualTTS as ChatterboxTTS
+    from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     raise Exception(f"Missing module: {e}")
@@ -48,9 +48,9 @@ def language_to_chatterbox_language(language: Language) -> Optional[str]:
     return result
 
 
-class ChatterboxTTSService(TTSService):
+class ChatterboxMultilingualTTSService(TTSService):
     # CLASS-LEVEL SHARED MODEL - This is the key change!
-    _shared_model: Optional[ChatterboxTTS] = None
+    _shared_model: Optional[ChatterboxMultilingualTTS] = None
     _model_lock = asyncio.Lock()
     _model_device = None
     
@@ -73,11 +73,11 @@ class ChatterboxTTSService(TTSService):
         self._session_id = id(self)
         # self.warm_up_model()
         
-        logger.info(f"ChatterboxTTSService instance created (session {self._session_id})")
+        logger.info(f"ChatterboxMultilingualTTSService instance created (session {self._session_id})")
 
 
     @classmethod
-    async def _ensure_shared_model_loaded(cls, device: str) -> ChatterboxTTS:
+    async def _ensure_shared_model_loaded(cls, device: str) -> ChatterboxMultilingualTTS:
         """Load the model once and share it across all instances"""
         # If model already loaded on the same device, return it
         if cls._shared_model is not None and cls._model_device == device:
@@ -94,7 +94,7 @@ class ChatterboxTTSService(TTSService):
             logger.info(f"Loading shared Chatterbox model on {device} (one-time operation)")
             try:
                 # Load the model asynchronously
-                model = await ChatterboxTTS.from_pretrained_async(device)
+                model = await ChatterboxMultilingualTTS.from_pretrained_async(device)
                 if model is None:
                     raise RuntimeError("Failed to load Chatterbox model")
                 
@@ -107,7 +107,7 @@ class ChatterboxTTSService(TTSService):
                 logger.error(f"Failed to load shared model: {e}")
                 raise
     
-    async def _get_model(self) -> ChatterboxTTS:
+    async def _get_model(self) -> ChatterboxMultilingualTTS:
         """Get the shared model instance"""
         return await self._ensure_shared_model_loaded(self.device)
     
@@ -199,7 +199,7 @@ class ChatterboxTTSService(TTSService):
     async def cleanup(self):
         """Cleanup method for this service instance"""
         await self._cleanup_stream()
-        logger.info(f"Session {self._session_id}: ChatterboxTTSService instance cleaned up")
+        logger.info(f"Session {self._session_id}: ChatterboxMultilingualTTSService instance cleaned up")
     
     @classmethod
     async def cleanup_shared_model(cls):
