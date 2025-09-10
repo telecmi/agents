@@ -127,3 +127,15 @@ Connect phone calls in minutes using the Piopiy dashboard:
 No SIP setup or third-party telephony vendors are required—Piopiy handles the calls so you can focus on your agent logic.
 
 Thanks to Pepicat for making client SDK implementation easy.
+
+
+
+## Kokoro Model Download
+
+To download kokoro onnx model run the command  after running the 
+
+`pip install -e .`
+
+```
+download-kokoro
+``` 
