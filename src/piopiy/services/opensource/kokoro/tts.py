@@ -1,8 +1,6 @@
-#
 # Copyright (c) 2025-2026, TeleCMI
-#
 # SPDX-License-Identifier: BSD 2-Clause License
-#
+
 import os
 import urllib.request
 import numpy as np
