@@ -1,21 +1,19 @@
 # Sales CRM voice agent example
 import asyncio
 import os
-
-from dotenv import load_dotenv
 from piopiy.agent import Agent
-from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
-from piopiy.audio.vad.silero import SileroVADAnalyzer
 from piopiy.services.deepgram.stt import DeepgramSTTService
 from piopiy.services.openai.llm import OpenAILLMService
-from piopiy.services.opensource.kokoro import KokoroTTSService
-from piopiy.transcriptions.language import Language
 from piopiy.voice_agent import VoiceAgent
-
+from dotenv import load_dotenv
+from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
+from piopiy.audio.vad.silero import SileroVADAnalyzer
+from piopiy.services.opensource.chatterbox import ChatterboxTTSService
 load_dotenv()
 
+
+
 async def create_session():
-   
     voice_agent = VoiceAgent(
         instructions=(
             "You are an advanced voice AI sales assistant for a CRM platform "
@@ -24,25 +22,14 @@ async def create_session():
             "Provide clear concise and persuasive information to help them make informed decisions "
             "Always be courteous professional and ready to assist with any sales related inquiries"
         ),
-    
         greeting="Hello Good Morning Welcome to TeleCMI, how can I help you today?"
     )
 
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
+    tts = ChatterboxTTSService(base_url="ws://localhost:60007", sample_rate=24000)
 
-
-    #KokoroTTS
-    tts = KokoroTTSService(
-        model_type = "normal", #or "int8-gpu" or "int8-cpu"
-        voice_id = "af_sarah",
-        is_phonemes = False,
-        params=KokoroTTSService.InputParams(
-            language=Language.EN,  
-            speed=1.2,
-        ),
-    )
-    
+ 
     vad = SileroVADAnalyzer()
 
 
@@ -53,6 +40,7 @@ async def create_session():
    
 
 async def main():
+    # await preload_model()
     agent = Agent(
         agent_id=os.getenv("AGENT_ID"),
         agent_token=os.getenv("AGENT_TOKEN"),
