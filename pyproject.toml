@@ -181,5 +181,8 @@ command_line = "--module pytest"
 source = ["src"]
 omit = ["*/tests/*"]
 
+
+
 [project.scripts]
-download-kokoro-models = "piopiy.scripts.download_kokoro:main"
+download-kokoro = "piopiy.setup_utils:download_kokoro_models"
+
