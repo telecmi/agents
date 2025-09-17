@@ -11,7 +11,7 @@ from loguru import logger
 
 __version__ = version("piopiy-ai")
 
-logger.info(f"PIOPIY {__version__} (Python {sys.version})")
+logger.info(f"Piopiy {__version__} (Python {sys.version})")
 
 # We replace `asyncio.wait_for()` for `wait_for2.wait_for()` for Python < 3.12.
 #

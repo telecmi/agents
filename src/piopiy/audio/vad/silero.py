@@ -1,7 +1,5 @@
 #
 # Copyright (c) 2024–2025, Daily
-
-# copyright (c) 2024-2025, TeleCMI
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
