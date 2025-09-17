@@ -5,11 +5,6 @@
 - **Python 3.11** (recommended)  
 - A running **Chatterbox TTS server** (`ws://server_ip:port`)  
 - Change the base url of TTS service 
-- Create a .env file and place it inside the root folder and the API keys are:
-  - `DEEPGRAM_API_KEY` : [Deepgram](https://deepgram.com)
-  - `OPENAI_API_KEY` : [OpenAI](https://platform.openai.com) 
-  - `AGENT_ID` : from TeleCMI 
-  - `AGENT_TOKEN` : from TeleCMI
 
 ---
 
