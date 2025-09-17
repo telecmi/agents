@@ -24,7 +24,7 @@ from piopiy.processors.frame_processor import FrameDirection
 from piopiy.services.tts_service import InterruptibleTTSService
 
 
-class ChatterboxTTSService(InterruptibleTTSService):
+class OrpheusTTS(InterruptibleTTSService):
     """
     Interruptible TTS wrapper for Orpheus WS server.
 
@@ -38,7 +38,7 @@ class ChatterboxTTSService(InterruptibleTTSService):
     def __init__(
         self,
         *,
-        base_url: str = "ws://localhost:60007",
+        base_url: str = "ws://127.0.0.1:8765",
         voice: Optional[str] = None,
         sample_rate: int = 24000,
         request_timeout_s: float = 65.0,

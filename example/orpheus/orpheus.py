@@ -1,14 +1,12 @@
 import asyncio
 import os
 
+
 from piopiy.services.opensource.orpheus.tts import OrpheusTTS
 from piopiy.agent import Agent
 from piopiy.voice_agent import VoiceAgent
 from piopiy.services.deepgram.stt import DeepgramSTTService
 from piopiy.services.openai.llm import OpenAILLMService
-from pipecat.audio.vad.silero import SileroVADAnalyzer
-from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
-
 
 import dotenv
 
@@ -16,17 +14,23 @@ import dotenv
 dotenv.load_dotenv()
 async def create_session():
     voice_agent = VoiceAgent(
-        instructions="You are an advanced voice AI for cloud telephony .you response only in english and you can add <hmm..> tag when it require for natural voice",
+        instructions="You are an advanced voice AI for cloud telephony sales assistant .you response only in hindi",
         greeting="Hello! How can I help you today?",
     )
 
-    vad = SileroVADAnalyzer()
-   
+    vad = {
+       "confidence": 0.7,
+    "start_secs": 0.2,
+    "stop_secs": 0.8,
+    "min_volume": 0.6    # passthrough
+    }
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
+   
+    #tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"), voice_id="bdab08ad-4137-4548-b9db-6142854c7525")
     tts = OrpheusTTS(base_url="ws://192.168.0.120:8765", sample_rate=24000)
 
-    await voice_agent.AgentAction(stt=stt, llm=llm, tts=tts,vad=vad,allow_interruptions=True,interruption_strategy=MinWordsInterruptionStrategy(min_words=1))
+    await voice_agent.AgentAction(stt=stt, llm=llm, tts=tts,vad=vad)
     await voice_agent.start()
 
 

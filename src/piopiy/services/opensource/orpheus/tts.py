@@ -4,8 +4,9 @@
 import json
 import uuid
 import asyncio
+import logging
 from contextlib import suppress
-from typing import AsyncGenerator, Optional, Union
+from typing import AsyncGenerator, Optional, Union, Any
 
 from websockets.asyncio.client import connect as ws_connect
 from websockets.exceptions import ConnectionClosed, ConnectionClosedOK, ConnectionClosedError
@@ -24,15 +25,33 @@ from piopiy.processors.frame_processor import FrameDirection
 from piopiy.services.tts_service import InterruptibleTTSService
 
 
+logger = logging.getLogger(__name__)
+
+
 class OrpheusTTS(InterruptibleTTSService):
     """
-    Interruptible TTS wrapper for Orpheus WS server.
+    Interruptible TTS wrapper for an Orpheus WebSocket server.
 
     Protocol:
       - Send:   {"type":"synthesize","text":...,"voice":?,"request_id":...}
       - Stream: binary PCM s16le frames
-      - Ctrl:   {"type":"started", ...}, {"type":"done", ...}
-      - Cancel: {"type":"cancel"}
+      - Ctrl:   {"type":"started", ...}, {"type":"done", ...}, {"type":"error", "error": ...}
+      - Cancel: {"type":"cancel","request_id":...}
+
+    Key features:
+      - True barge-in: interruption races against ws.recv() and stops audio immediately.
+      - Targeted cancel using the in-flight request_id.
+      - Optional "hard cancel" that closes the socket on interruption for guaranteed instant stop.
+
+    Args:
+        base_url: WebSocket URL of the Orpheus server.
+        voice: Optional default voice id/name to send with synthesize.
+        sample_rate: Local/announced sample rate for outgoing frames when server doesn't specify.
+        request_timeout_s: Max seconds to wait for server activity before timing out.
+        reuse_socket: If False, sockets are closed after each request or interruption.
+        hard_cancel_on_interrupt: If True, close the socket immediately on barge-in (StartInterruptionFrame).
+                                   This guarantees no further PCM but requires a reconnect for next request.
+        **kwargs: Passed to InterruptibleTTSService.
     """
 
     def __init__(
@@ -42,7 +61,8 @@ class OrpheusTTS(InterruptibleTTSService):
         voice: Optional[str] = None,
         sample_rate: int = 24000,
         request_timeout_s: float = 65.0,
-        reuse_socket: bool = True,  # graceful by default
+        reuse_socket: bool = True,
+        hard_cancel_on_interrupt: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -53,12 +73,15 @@ class OrpheusTTS(InterruptibleTTSService):
         )
         self._base_url = base_url
         if voice:
+            # Provided by the base service in most setups
             self.set_voice(voice)
 
-        self._ws = None  # type: Optional[any]
+        self._ws: Optional[Any] = None
         self._timeout = float(request_timeout_s)
 
         self._reuse_socket = bool(reuse_socket)
+        self._hard_cancel_on_interrupt = bool(hard_cancel_on_interrupt)
+
         self._stop_event = asyncio.Event()
         self._was_interrupted = False
 
@@ -66,22 +89,35 @@ class OrpheusTTS(InterruptibleTTSService):
         self._synth_lock = asyncio.Lock()
         self._speaking = False
 
+        # Track the in-flight request id for targeted cancel
+        self._current_req_id: Optional[str] = None
+
     # -------------
     # Piopiy hooks
     # -------------
     async def push_frame(self, frame: Frame, direction: FrameDirection = FrameDirection.DOWNSTREAM):
+        """
+        React *immediately* to interruption/cancel frames so barge-in is instant.
+        """
         if isinstance(frame, StartInterruptionFrame):
-            self._was_interrupted = True
+            # Hard-cancel means we intentionally drop the socket to guarantee no trailing audio
+            if self._hard_cancel_on_interrupt:
+                self._reuse_socket = False
+            logger.debug("push_frame: StartInterruptionFrame")
+            await self.interrupt()
         elif isinstance(frame, (CancelFrame, EndFrame)):
-            # End the transport fully
+            # If the pipeline cancels/ends, don't reuse the socket by default.
             self._reuse_socket = False
+            logger.debug("push_frame: %s -> interrupt (reuse_socket=False)", type(frame).__name__)
+            await self.interrupt()
+
         return await super().push_frame(frame, direction)
 
     # -------------
     # WS plumbing
     # -------------
     async def _connect_websocket(self) -> bool:
-        if self._ws is not None:
+        if self._ws is not None and not getattr(self._ws, "closed", False):
             return True
         self._ws = await ws_connect(self._base_url, max_size=None)
         return True
@@ -89,7 +125,7 @@ class OrpheusTTS(InterruptibleTTSService):
     async def _disconnect_websocket(self) -> None:
         ws = self._ws
         self._ws = None
-        if ws:
+        if ws and not getattr(ws, "closed", False):
             with suppress(Exception):
                 await ws.close()
 
@@ -100,6 +136,7 @@ class OrpheusTTS(InterruptibleTTSService):
         await self._disconnect_websocket()
 
     async def _receive_messages(self) -> AsyncGenerator[Union[bytes, str], None]:
+        # Optional utility if you need raw consumption elsewhere
         if not self._ws:
             return
         try:
@@ -112,19 +149,58 @@ class OrpheusTTS(InterruptibleTTSService):
     # Interruption
     # -------------
     async def interrupt(self) -> None:
-        """Barge-in: send cancel; either keep or close WS."""
+        """
+        Barge-in: send cancel for the *current* request_id; either keep or close WS.
+        """
         self._stop_event.set()
         self._was_interrupted = True
 
         ws = self._ws
         if ws:
             with suppress(Exception):
-                await ws.send(json.dumps({"type": "cancel"}))
+                # Only send targeted cancel when we know the current request id.
+                if self._current_req_id:
+                    payload = {"type": "cancel", "request_id": self._current_req_id}
+                    logger.debug("interrupt: sending cancel %s", payload)
+                    await ws.send(json.dumps(payload))
+                else:
+                    logger.debug("interrupt: no current_req_id yet; skipping cancel send")
 
             if not self._reuse_socket:
+                logger.debug("interrupt: closing websocket (reuse_socket=False)")
                 with suppress(Exception):
                     await ws.close()
                 self._ws = None
+
+    async def _drain_after_cancel(self, timeout_s: float = 0.2) -> None:
+        """
+        Drain a few frames after cancel so the server can reply 'done' and we
+        keep the socket reusable without waiting for long timeouts.
+        """
+        ws = self._ws
+        if not ws or not self._reuse_socket:
+            return
+
+        loop = asyncio.get_event_loop()
+        deadline = loop.time() + float(timeout_s)
+
+        while loop.time() < deadline:
+            try:
+                msg = await asyncio.wait_for(ws.recv(), timeout=max(0.01, deadline - loop.time()))
+            except asyncio.TimeoutError:
+                break
+            except (ConnectionClosedOK, ConnectionClosedError, ConnectionClosed):
+                break
+            except Exception:
+                break
+
+            if isinstance(msg, str):
+                try:
+                    j = json.loads(msg)
+                    if j.get("type") == "done" and j.get("request_id") == self._current_req_id:
+                        break
+                except Exception:
+                    pass
 
     # -------------
     # Main speak
@@ -138,8 +214,15 @@ class OrpheusTTS(InterruptibleTTSService):
             self._was_interrupted = False
             self._speaking = True
             req_id = f"req-{uuid.uuid4()}"
+            self._current_req_id = req_id
             announced_sr = self.sample_rate
             ttfb_stopped = False
+            stopped_yielded = False
+            drained_after_interrupt = False
+            synthesis_started = False
+
+            # Start watching for interruption ASAP (before any network I/O)
+            stop_task: Optional[asyncio.Task] = asyncio.create_task(self._stop_event.wait())
 
             try:
                 ok = await self._connect_websocket()
@@ -151,39 +234,83 @@ class OrpheusTTS(InterruptibleTTSService):
                 await self.start_tts_usage_metrics(text)
                 yield TTSStartedFrame()
 
-                await self._ws.send(json.dumps({
+                # Kick off synthesis
+                synth_payload = {
                     "type": "synthesize",
                     "text": text,
                     "voice": getattr(self, "_voice_id", None),
                     "request_id": req_id,
-                }))
+                }
+                logger.debug("run_tts: sending synthesize %s", {**synth_payload, "text": "...",})
+                await self._ws.send(json.dumps(synth_payload))
 
-                async def recv_one():
-                    return await asyncio.wait_for(self._ws.recv(), timeout=self._timeout)
-
+                # Race recv() against interruption for immediate barge-in
                 while True:
-                    try:
-                        msg = await recv_one()
-                    except asyncio.TimeoutError:
+                    recv_task = asyncio.create_task(self._ws.recv())
+
+                    done, pending = await asyncio.wait(
+                        {recv_task, stop_task},
+                        return_when=asyncio.FIRST_COMPLETED,
+                        timeout=self._timeout,
+                    )
+
+                    # Timeout: no messages and no interrupt
+                    if not done:
+                        recv_task.cancel()
+                        with suppress(asyncio.CancelledError):
+                            await recv_task
                         if self._was_interrupted:
+                            # Interrupted while timed out; yield stop and exit
+                            if not stopped_yielded:
+                                yield TTSStoppedFrame()
+                                stopped_yielded = True
                             break
                         yield ErrorFrame("TTS timeout")
                         break
+
+                    # Interruption wins the race
+                    if stop_task in done:
+                        # Cancel the in-flight recv and yield stop immediately
+                        recv_task.cancel()
+                        with suppress(asyncio.CancelledError):
+                            await recv_task
+                        if not stopped_yielded:
+                            yield TTSStoppedFrame()
+                            stopped_yielded = True
+                        # Optional tiny drain to keep socket reusable
+                        await self._drain_after_cancel(0.2)
+                        drained_after_interrupt = True
+                        break
+
+                    # Otherwise, we got a WS message
+                    try:
+                        msg = recv_task.result()
+                    except asyncio.CancelledError:
+                        # Should not happen here, but ignore if it does
+                        continue
                     except (ConnectionClosedOK, ConnectionClosedError, ConnectionClosed) as e:
-                        if self._was_interrupted:
-                            break
-                        yield ErrorFrame(f"WS closed: {e}")
+                        if self._was_interrupted and not stopped_yielded:
+                            yield TTSStoppedFrame()
+                            stopped_yielded = True
+                        else:
+                            yield ErrorFrame(f"WS closed: {e}")
                         break
                     except Exception as e:
-                        if self._was_interrupted:
-                            break
-                        yield ErrorFrame(f"Orpheus WS TTS error: {e}")
+                        if self._was_interrupted and not stopped_yielded:
+                            yield TTSStoppedFrame()
+                            stopped_yielded = True
+                        else:
+                            yield ErrorFrame(f"Orpheus WS TTS error: {e}")
                         break
 
                     # Binary PCM
                     if isinstance(msg, (bytes, bytearray)):
-                        # In graceful mode: drop any late frames after cancel
-                        if self._stop_event.is_set() and self._reuse_socket:
+                        # If interrupted, stop yielding audio immediately (regardless of reuse policy)
+                        if self._stop_event.is_set():
+                            logger.debug("run_tts: drop PCM after interrupt")
+                            break
+                        if not synthesis_started:
+                            logger.debug("run_tts: drop PCM before started")
                             continue
                         if not ttfb_stopped:
                             ttfb_stopped = True
@@ -203,13 +330,26 @@ class OrpheusTTS(InterruptibleTTSService):
                         continue
 
                     t = j.get("type")
+                    req_id_received = j.get("request_id")
+                    if req_id_received != self._current_req_id:
+                        logger.warning(
+                            "run_tts: ignoring control message for wrong request_id: %s != %s",
+                            req_id_received,
+                            self._current_req_id,
+                        )
+                        continue
                     if t == "started":
                         sr = j.get("sample_rate")
                         if sr is not None:
                             with suppress(Exception):
                                 announced_sr = int(sr)
+                        synthesis_started = True
+                        # If barge-in happened before the server started, send a targeted cancel now.
+                        if self._stop_event.is_set():
+                            with suppress(Exception):
+                                await self._ws.send(json.dumps({"type": "cancel", "request_id": req_id}))
+                            break
                     elif t == "error":
-                        # surface server errors (should be rare now that server auto-cancels)
                         yield ErrorFrame(str(j.get("error")))
                         break
                     elif t == "done":
@@ -217,7 +357,15 @@ class OrpheusTTS(InterruptibleTTSService):
                     else:
                         continue
 
-                yield TTSStoppedFrame()
+                # If we were interrupted and keeping the socket, briefly drain for 'done'
+                if self._was_interrupted and self._reuse_socket and not drained_after_interrupt:
+                    with suppress(Exception):
+                        await self._drain_after_cancel(0.2)
+
+                # If we haven't announced stop yet (normal completion or early break), do it now
+                if not stopped_yielded:
+                    yield TTSStoppedFrame()
+                    stopped_yielded = True
 
             except Exception as e:
                 yield ErrorFrame(f"Orpheus WS TTS error: {e}")
@@ -226,6 +374,13 @@ class OrpheusTTS(InterruptibleTTSService):
                 with suppress(Exception):
                     if not ttfb_stopped:
                         await self.stop_ttfb_metrics()
+                with suppress(Exception):
+                    await self.stop_tts_usage_metrics()
+                if stop_task and not stop_task.done():
+                    stop_task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await stop_task
                 if not self._reuse_socket:
                     await self._disconnect_websocket()
                 self._speaking = False
+                self._current_req_id = None

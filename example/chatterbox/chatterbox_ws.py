@@ -8,7 +8,7 @@ from piopiy.voice_agent import VoiceAgent
 from dotenv import load_dotenv
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.audio.vad.silero import SileroVADAnalyzer
-from piopiy.services.opensource.chatterbox import ChatterboxTTSService
+from piopiy.services.opensource.chatterbox.tts import ChatterboxTTSService
 load_dotenv()
 
 
@@ -27,7 +27,7 @@ async def create_session():
 
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
-    tts = ChatterboxTTSService(base_url="ws://localhost:60007", sample_rate=24000)
+    tts = ChatterboxTTSService(base_url="ws://192.168.0.120:60007", sample_rate=24000)
 
  
     vad = SileroVADAnalyzer()
