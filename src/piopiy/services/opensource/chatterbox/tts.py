@@ -1,218 +1,231 @@
-#
-# Copyright (c) 2024–2025, TeleCMI
-#
-# SPDX-License-Identifier: BSD 2-Clause License
-#
+# Copyright (c) 2025-2026, TeleCMI
+# SPDX-License-Identifier: BSD-2-Clause
 
-import numpy as np
+import json
+import uuid
 import asyncio
-from typing import AsyncGenerator, Optional
+from contextlib import suppress
+from typing import AsyncGenerator, Optional, Union
 
-from loguru import logger
+from websockets.asyncio.client import connect as ws_connect
+from websockets.exceptions import ConnectionClosed, ConnectionClosedOK, ConnectionClosedError
 
 from piopiy.frames.frames import (
-    ErrorFrame,
     Frame,
-    StartInterruptionFrame,
-    TTSAudioRawFrame,
     TTSStartedFrame,
+    TTSAudioRawFrame,
     TTSStoppedFrame,
+    ErrorFrame,
+    StartInterruptionFrame,
+    CancelFrame,
+    EndFrame,
 )
 from piopiy.processors.frame_processor import FrameDirection
-from piopiy.services.ai_services import TTSService
-from piopiy.transcriptions.language import Language
-from piopiy.utils.tracing.service_decorators import traced_tts
-
-try:
-    from chatterbox.tts import ChatterboxTTS
-except ModuleNotFoundError as e:
-    logger.error(f"Exception: {e}")
-    raise Exception(f"Missing module: {e}")
+from piopiy.services.tts_service import InterruptibleTTSService
 
 
-def language_to_chatterbox_language(language: Language) -> Optional[str]:
-    """Convert piopiy Language to Chatterbox language code."""
-    BASE_LANGUAGES = {
-        Language.EN: "en-us",
-        Language.HI: "hi",
-    }
-    
-    result = BASE_LANGUAGES.get(language)
-    
-    if not result:
-        lang_str = str(language.value)
-        base_code = lang_str.split("-")[0].lower()
-        result = f"{base_code}-us" if base_code in ["en"] else None
-        
-    return result
+class ChatterboxTTSService(InterruptibleTTSService):
+    """
+    Interruptible TTS wrapper for Orpheus WS server.
 
+    Protocol:
+      - Send:   {"type":"synthesize","text":...,"voice":?,"request_id":...}
+      - Stream: binary PCM s16le frames
+      - Ctrl:   {"type":"started", ...}, {"type":"done", ...}
+      - Cancel: {"type":"cancel"}
+    """
 
-class ChatterboxTTSService(TTSService):
-    # CLASS-LEVEL SHARED MODEL - This is the key change!
-    _shared_model: Optional[ChatterboxTTS] = None
-    _model_lock = asyncio.Lock()
-    _model_device = None
-    
     def __init__(
         self,
         *,
-        voice_path: str,
-        device: str = "cuda",
-        sample_rate: Optional[int] = 24000,
+        base_url: str = "ws://localhost:60007",
+        voice: Optional[str] = None,
+        sample_rate: int = 24000,
+        request_timeout_s: float = 65.0,
+        reuse_socket: bool = True,  # graceful by default
         **kwargs,
     ):
-        super().__init__(sample_rate=sample_rate, **kwargs)
-        self.device = device
-        self.voice_path = voice_path
-        
-        # Instance-specific locks for streaming
-        self._stream_lock = asyncio.Lock()
-        self._current_stream = None
-        self._is_streaming = False
-        self._session_id = id(self)
-        self.warm_up_model()
-        logger.info(f"ChatterboxTTSService instance created (session {self._session_id})")
+        super().__init__(
+            sample_rate=sample_rate,
+            push_stop_frames=True,
+            pause_frame_processing=True,
+            **kwargs,
+        )
+        self._base_url = base_url
+        if voice:
+            self.set_voice(voice)
 
-        
-    def warm_up_model(self):
-        text_list =["hello i am from telecmi",
-                    "today is monday"]
-        for i in text_list:
-            self.run_tts(i)
+        self._ws = None  # type: Optional[any]
+        self._timeout = float(request_timeout_s)
 
-    @classmethod
-    async def _ensure_shared_model_loaded(cls, device: str) -> ChatterboxTTS:
-        """Load the model once and share it across all instances"""
-        # If model already loaded on the same device, return it
-        if cls._shared_model is not None and cls._model_device == device:
-            logger.debug(f"Using existing shared model on {device}")
-            return cls._shared_model
-        
-        # Load model with lock to prevent multiple simultaneous loads
-        async with cls._model_lock:
-            # Double-check after acquiring lock
-            if cls._shared_model is not None and cls._model_device == device:
-                return cls._shared_model
-            
-            # If device changed or model not loaded, load it
-            logger.info(f"Loading shared Chatterbox model on {device} (one-time operation)")
-            try:
-                # Load the model asynchronously
-                model = await ChatterboxTTS.from_pretrained_async(device)
-                if model is None:
-                    raise RuntimeError("Failed to load Chatterbox model")
-                
-                cls._shared_model = model
-                cls._model_device = device
-                logger.info(f"Shared Chatterbox model loaded successfully on {device}")
-                return cls._shared_model
-                
-            except Exception as e:
-                logger.error(f"Failed to load shared model: {e}")
-                raise
-    
-    async def _get_model(self) -> ChatterboxTTS:
-        """Get the shared model instance"""
-        return await self._ensure_shared_model_loaded(self.device)
-    
-    def can_generate_metrics(self) -> bool:
+        self._reuse_socket = bool(reuse_socket)
+        self._stop_event = asyncio.Event()
+        self._was_interrupted = False
+
+        # Prevent overlapping run_tts() calls from this instance
+        self._synth_lock = asyncio.Lock()
+        self._speaking = False
+
+    # -------------
+    # Piopiy hooks
+    # -------------
+    async def push_frame(self, frame: Frame, direction: FrameDirection = FrameDirection.DOWNSTREAM):
+        if isinstance(frame, StartInterruptionFrame):
+            self._was_interrupted = True
+        elif isinstance(frame, (CancelFrame, EndFrame)):
+            # End the transport fully
+            self._reuse_socket = False
+        return await super().push_frame(frame, direction)
+
+    # -------------
+    # WS plumbing
+    # -------------
+    async def _connect_websocket(self) -> bool:
+        if self._ws is not None:
+            return True
+        self._ws = await ws_connect(self._base_url, max_size=None)
         return True
-    
-    async def _cleanup_stream(self):
-        """Clean up the current stream for this session"""
-        async with self._stream_lock:
-            if self._current_stream:
-                try:
-                    if hasattr(self._current_stream, 'aclose'):
-                        await self._current_stream.aclose()
-                except Exception as e:
-                    logger.debug(f"Session {self._session_id}: Error cleaning up stream: {e}")
-                finally:
-                    self._current_stream = None
-                    self._is_streaming = False
 
-    @traced_tts
+    async def _disconnect_websocket(self) -> None:
+        ws = self._ws
+        self._ws = None
+        if ws:
+            with suppress(Exception):
+                await ws.close()
+
+    async def _connect(self) -> bool:
+        return await self._connect_websocket()
+
+    async def _disconnect(self) -> None:
+        await self._disconnect_websocket()
+
+    async def _receive_messages(self) -> AsyncGenerator[Union[bytes, str], None]:
+        if not self._ws:
+            return
+        try:
+            async for msg in self._ws:
+                yield msg
+        except Exception:
+            return
+
+    # -------------
+    # Interruption
+    # -------------
+    async def interrupt(self) -> None:
+        """Barge-in: send cancel; either keep or close WS."""
+        self._stop_event.set()
+        self._was_interrupted = True
+
+        ws = self._ws
+        if ws:
+            with suppress(Exception):
+                await ws.send(json.dumps({"type": "cancel"}))
+
+            if not self._reuse_socket:
+                with suppress(Exception):
+                    await ws.close()
+                self._ws = None
+
+    # -------------
+    # Main speak
+    # -------------
     async def run_tts(self, text: str) -> AsyncGenerator[Frame, None]:
-        """Generate speech from text using Chatterbox in a streaming fashion."""
-        # Clean up any previous stream for this session
-        await self._cleanup_stream()
-        
-        # Get the shared model
-        model = await self._get_model()
-        
-        logger.debug(f"Session {self._session_id}: Generating TTS: [{text[:50]}...]")
-        
-        # Use instance-specific lock for streaming
-        async with self._stream_lock:
-            self._is_streaming = True
-            
-            try:
-                await self.start_ttfb_metrics()
-                yield TTSStartedFrame()
-                
-                logger.info(f"Session {self._session_id}: Creating stream")
-                
-                # Create a new stream for this specific request using the shared model
-                self._current_stream = model.create_stream(text, self.voice_path)
-                
-                await self.start_tts_usage_metrics(text)
-                started = False
-                
-                async for samples, sample_rate in self._current_stream:
-                    # Check if this specific session should stop streaming
-                    if not self._is_streaming:
-                        logger.info(f"Session {self._session_id}: Streaming interrupted")
-                        break
-                    
-                    if not started:
-                        started = True
-                        logger.debug(f"Session {self._session_id}: Started streaming audio")
-                    
-                    samples_int16 = (samples * 32767).astype(np.int16)
-                    yield TTSAudioRawFrame(
-                        audio=samples_int16.tobytes(),
-                        sample_rate=sample_rate,
-                        num_channels=1,
-                    )
-                
-                yield TTSStoppedFrame()
-                logger.debug(f"Session {self._session_id}: TTS streaming completed")
-                
-            except asyncio.CancelledError:
-                logger.info(f"Session {self._session_id}: TTS streaming cancelled")
-                yield TTSStoppedFrame()
-                raise
-            except Exception as e:
-                logger.error(f"Session {self._session_id} exception: {e}")
-                yield ErrorFrame(f"Error generating audio: {str(e)}")
-            finally:
-                self._is_streaming = False
-                self._current_stream = None
+        """
+        Yields: TTSStartedFrame, TTSAudioRawFrame(...)*, TTSStoppedFrame or ErrorFrame
+        """
+        async with self._synth_lock:  # prevent overlapping run_tts() from this instance
+            self._stop_event.clear()
+            self._was_interrupted = False
+            self._speaking = True
+            req_id = f"req-{uuid.uuid4()}"
+            announced_sr = self.sample_rate
+            ttfb_stopped = False
 
-    async def _handle_interruption(self, frame: StartInterruptionFrame, direction: FrameDirection):
-        """Handle interruptions by stopping the current stream for this session"""
-        logger.info(f"Session {self._session_id}: Handling TTS interruption")
-        
-        # Stop the current stream for this session only
-        async with self._stream_lock:
-            self._is_streaming = False
-        
-        await super()._handle_interruption(frame, direction)
-        await self.stop_all_metrics()
-    
-    async def cleanup(self):
-        """Cleanup method for this service instance"""
-        await self._cleanup_stream()
-        logger.info(f"Session {self._session_id}: ChatterboxTTSService instance cleaned up")
-    
-    @classmethod
-    async def cleanup_shared_model(cls):
-        """
-        Optional: Call this to explicitly clean up the shared model.
-        Useful for graceful shutdown.
-        """
-        async with cls._model_lock:
-            if cls._shared_model:
-                logger.info("Cleaning up shared Chatterbox model")
-                cls._shared_model = None
-                cls._model_device = None
+            try:
+                ok = await self._connect_websocket()
+                if not ok or self._ws is None:
+                    yield ErrorFrame("WS connect failed")
+                    return
+
+                await self.start_ttfb_metrics()
+                await self.start_tts_usage_metrics(text)
+                yield TTSStartedFrame()
+
+                await self._ws.send(json.dumps({
+                    "type": "synthesize",
+                    "text": text,
+                    "voice": getattr(self, "_voice_id", None),
+                    "request_id": req_id,
+                }))
+
+                async def recv_one():
+                    return await asyncio.wait_for(self._ws.recv(), timeout=self._timeout)
+
+                while True:
+                    try:
+                        msg = await recv_one()
+                    except asyncio.TimeoutError:
+                        if self._was_interrupted:
+                            break
+                        yield ErrorFrame("TTS timeout")
+                        break
+                    except (ConnectionClosedOK, ConnectionClosedError, ConnectionClosed) as e:
+                        if self._was_interrupted:
+                            break
+                        yield ErrorFrame(f"WS closed: {e}")
+                        break
+                    except Exception as e:
+                        if self._was_interrupted:
+                            break
+                        yield ErrorFrame(f"Orpheus WS TTS error: {e}")
+                        break
+
+                    # Binary PCM
+                    if isinstance(msg, (bytes, bytearray)):
+                        # In graceful mode: drop any late frames after cancel
+                        if self._stop_event.is_set() and self._reuse_socket:
+                            continue
+                        if not ttfb_stopped:
+                            ttfb_stopped = True
+                            with suppress(Exception):
+                                await self.stop_ttfb_metrics()
+                        yield TTSAudioRawFrame(
+                            audio=bytes(msg),
+                            sample_rate=announced_sr,
+                            num_channels=1,
+                        )
+                        continue
+
+                    # Control JSON
+                    try:
+                        j = json.loads(msg) if isinstance(msg, str) else {}
+                    except Exception:
+                        continue
+
+                    t = j.get("type")
+                    if t == "started":
+                        sr = j.get("sample_rate")
+                        if sr is not None:
+                            with suppress(Exception):
+                                announced_sr = int(sr)
+                    elif t == "error":
+                        # surface server errors (should be rare now that server auto-cancels)
+                        yield ErrorFrame(str(j.get("error")))
+                        break
+                    elif t == "done":
+                        break
+                    else:
+                        continue
+
+                yield TTSStoppedFrame()
+
+            except Exception as e:
+                yield ErrorFrame(f"Orpheus WS TTS error: {e}")
+
+            finally:
+                with suppress(Exception):
+                    if not ttfb_stopped:
+                        await self.stop_ttfb_metrics()
+                if not self._reuse_socket:
+                    await self._disconnect_websocket()
+                self._speaking = False
