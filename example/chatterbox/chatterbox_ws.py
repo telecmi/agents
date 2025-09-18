@@ -11,8 +11,6 @@ from piopiy.audio.vad.silero import SileroVADAnalyzer
 from piopiy.services.opensource.chatterbox.tts import ChatterboxTTSService
 load_dotenv()
 
-
-
 async def create_session():
     voice_agent = VoiceAgent(
         instructions=(
@@ -37,7 +35,8 @@ async def create_session():
     await voice_agent.start()
 
 
-   
+
+
 
 async def main():
     # await preload_model()
