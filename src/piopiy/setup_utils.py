@@ -95,7 +95,7 @@ def download_silero_model():
         return
     
     # Model URL (English TTS model)
-    model_url = "https://github.com/snakers4/silero-vad/blob/master/src/silero_vad/data/silero_vad.onnx"
+    model_url = "https://huggingface.co/onnx-community/silero-vad/resolve/main/onnx/model.onnx"
     
     def download_with_progress(url, filepath):
         """Download file with progress indication."""
