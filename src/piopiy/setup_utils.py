@@ -69,5 +69,63 @@ def download_kokoro_models():
         # Don't raise the exception to avoid breaking the installation
         return
 
+# if __name__ == "__main__":
+#     download_kokoro_models()
+
+
+def download_silero_model():
+    """Download Silero TTS model file during installation."""
+    print("🎯 Downloading Silero TTS model...")
+    
+    # Get the target directory - works both in development and after installation
+    try:
+        import piopiy
+        package_dir = Path(piopiy.__file__).parent
+    except ImportError:
+        package_dir = Path(__file__).parent
+    
+    target_dir = package_dir / "audio/vad/data"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Model path
+    model_path = target_dir / "silero_vad.onnx"
+    
+    if model_path.exists():
+        print("✅ Silero model already exists, skipping download")
+        return
+    
+    # Model URL (English TTS model)
+    model_url = "https://github.com/snakers4/silero-vad/blob/master/src/silero_vad/data/silero_vad.onnx"
+    
+    def download_with_progress(url, filepath):
+        """Download file with progress indication."""
+        def progress_hook(block_num, block_size, total_size):
+            if total_size > 0:
+                downloaded = block_num * block_size
+                percent = min(100, (downloaded * 100) // total_size)
+                size_mb = total_size / (1024 * 1024)
+                downloaded_mb = downloaded / (1024 * 1024)
+                sys.stdout.write(f"\r  Progress: {percent}% ({downloaded_mb:.1f}/{size_mb:.1f} MB)")
+                sys.stdout.flush()
+        
+        urllib.request.urlretrieve(url, filepath, progress_hook)
+        print()  # newline after progress
+    
+    try:
+        print("📥 Downloading silero_tts.pt...")
+        download_with_progress(model_url, model_path)
+        print("✅ Downloaded silero_tts.pt")
+        
+        print("🎉 Silero model file downloaded successfully!")
+        print(f"📁 File saved to: {target_dir}")
+        print(f"  - {model_path.name}: {model_path.stat().st_size / (1024*1024):.1f} MB")
+            
+    except Exception as e:
+        print(f"❌ Failed to download model: {e}")
+        print("You can run the download manually later")
+        return
+    
+
 if __name__ == "__main__":
     download_kokoro_models()
+    download_silero_model()
