@@ -16,3 +16,5 @@ kia/
 cmi/
 dist/
 *.onnx
+*.bin
+kokoro_models/

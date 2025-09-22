@@ -173,21 +173,21 @@ class KokoroTTSService(TTSService):
 
                 #comment out this for Hindi Language
 
-                # try:
-                #     from misaki import espeak
-                #     from misaki.espeak import EspeakG2P
+                try:
+                    from misaki import espeak
+                    from misaki.espeak import EspeakG2P
 
-                # except ModuleNotFoundError as e:
-                #     logger.error(f"Exception: {e}")
-                #     logger.error(
-                #         "In order to use Misaki, you need to `pip install misaki`"
-                #     )
-                #     raise Exception(f"Missing module: {e}") 
+                except ModuleNotFoundError as e:
+                    logger.error(f"Exception: {e}")
+                    logger.error(
+                        "In order to use Misaki, you need to `pip install misaki`"
+                    )
+                    raise Exception(f"Missing module: {e}") 
                 
 
-                # g2p = EspeakG2P(language=self._settings["language"])
-                # text, _ = g2p(text)
-                # self.is_phonemes = True
+                g2p = EspeakG2P(language=self._settings["language"])
+                text, _ = g2p(text)
+                self.is_phonemes = True
 
                 pass
 

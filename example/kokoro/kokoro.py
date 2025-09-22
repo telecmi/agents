@@ -34,8 +34,8 @@ async def create_session():
 
     #KokoroTTS
     tts = KokoroTTSService(
-        model_type = "normal", #or "int8-gpu" or "int8-cpu"
-        voice_id = "af_sarah",
+        model_type = "int8-gpu", #normal", #or "int8-gpu" or "int8-cpu"
+        voice_id = "af_sarah", #"hf_alpha" -> Hindi
         is_phonemes = False,
         params=KokoroTTSService.InputParams(
             language=Language.EN,  
