@@ -171,12 +171,3 @@ No SIP setup or third-party telephony vendors are required—Piopiy handles the 
 
 Thanks to Pipecat for making client SDK implementation easy.
 
-
-
-## Kokoro Model Download
-
-Kokoro remains available as an offline TTS option. After installing the package in editable mode (`pip install -e .`), download the ONNX models with:
-
-```bash
-download-kokoro
-``` 
