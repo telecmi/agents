@@ -31,7 +31,7 @@ async def create_session():
     vad = SileroVADAnalyzer()
 
 
-    await voice_agent.AgentAction(stt=stt, llm=llm, tts=tts, vad=vad, allow_interruptions=True, interruption_strategy=MinWordsInterruptionStrategy(min_words=1))
+    await voice_agent.Action(stt=stt, llm=llm, tts=tts, vad=vad, allow_interruptions=True, interruption_strategy=MinWordsInterruptionStrategy(min_words=1))
     await voice_agent.start()
 
 

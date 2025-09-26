@@ -44,7 +44,7 @@ class SpeechAgent:
     and yields agent responses (could be Ultravox, Voxtral, Step-Audio, etc.).
     """
 
-    def __init__(self, *, greeting: Optional[str] = None, idle_timeout_secs: int = 60) -> None:
+    def __init__(self, *, greeting: Optional[str] = None, instructions: str, idle_timeout_secs: int = 60) -> None:
         self._greeting = greeting
         self._idle_timeout_secs = idle_timeout_secs
 
@@ -63,7 +63,7 @@ class SpeechAgent:
         self._processors: List[FrameProcessor] = []
         self._pipe: Optional[Pipeline] = None
 
-    async def configure(
+    async def Action(
         self,
         *,
         omni: FrameProcessor,                  # REQUIRED: your realtime voice model

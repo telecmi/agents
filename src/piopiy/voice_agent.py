@@ -123,7 +123,7 @@ class VoiceAgent:
         self._tool_handlers[name] = handler
 
     # ---- Configuration ----
-    async def AgentAction(
+    async def Action(
         self,
         *,
         stt: FrameProcessor,

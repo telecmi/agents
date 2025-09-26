@@ -8,14 +8,14 @@ from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsI
 from piopiy.audio.vad.silero import SileroVADAnalyzer
 from piopiy.services.opensource.orpheus.tts import OrpheusTTS
 from piopiy.transcriptions.language import Language
-from piopiy.voice_agent import VoiceAgent
-
+from piopiy.speech_agent import SpeechAgent
+from piopiy.services.cartesia.tts import CartesiaTTSService
 from piopiy.services.opensource.ultravox.omni import UltravoxService  # <-- your omni runtime
 
 load_dotenv()
 
 async def create_session():
-    voice_agent = VoiceAgent(
+    voice_agent = SpeechAgent(
         instructions=(
             "You are an advanced voice AI sales assistant for a CRM platform. "
             "Your role is to engage with potential customers, understand their needs, "
@@ -28,7 +28,7 @@ async def create_session():
 
     # --- OMNI (Ultravox) — single speech runtime (no separate STT/LLM) ---
     omni = UltravoxService(
-        server_url="ws://localhost:8765",
+        server_url="ws://192.168.0.120:8766",
         language=Language.EN,
         # if your omni supports prompt/config directly, pass it here:
         system_prompt=(
@@ -41,13 +41,14 @@ async def create_session():
     )
 
     # --- TTS ---
-    tts = OrpheusTTS(base_url="ws://0.0.0.0:8765", sample_rate=24000)
+    #tts = OrpheusTTS(base_url="ws://0.0.0.0:8765", sample_rate=24000)
+    tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"), voice_id="bdab08ad-4137-4548-b9db-6142854c7525")
 
     # --- Optional VAD (recommended for telephony) ---
     vad = SileroVADAnalyzer()
 
     # Build pipeline: Transport → OMNI → TTS → Transport
-    await voice_agent.AgentAction(
+    await voice_agent.Action(
         omni=omni,                # <— only omni + tts
         tts=tts,
         vad=vad,
