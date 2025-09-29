@@ -1,6 +1,4 @@
-# Copyright (c) 2025-2026, TeleCMI
-# SPDX-License-Identifier: BSD-2-Clause
-# piopiy/services/opensource/chatterbox/tts.py
+# piopiy/services/opensource/dia/tts.py
 import json
 import uuid
 import asyncio
@@ -28,9 +26,9 @@ from piopiy.services.tts_service import InterruptibleTTSService
 logger = logging.getLogger(__name__)
 
 
-class ChatterboxTTSService(InterruptibleTTSService):
+class DiaTTSService(InterruptibleTTSService):
     """
-    Interruptible TTS wrapper for Chatterbox WS server.
+    Interruptible TTS wrapper for Dia WS server.
 
     Protocol:
       - Send:   {"type":"synthesize","text":...,"voice":?,"request_id":...}
@@ -42,9 +40,9 @@ class ChatterboxTTSService(InterruptibleTTSService):
     def __init__(
         self,
         *,
-        base_url: str = "ws://localhost:60007",
+        base_url: str = "ws://localhost:60008",
         voice: Optional[str] = None,
-        sample_rate: int = 24000,
+        sample_rate: int = 44100,
         request_timeout_s: float = 65.0,
         reuse_socket: bool = True,
         hard_cancel_on_interrupt: bool = False,
@@ -245,7 +243,7 @@ class ChatterboxTTSService(InterruptibleTTSService):
                             yield TTSStoppedFrame()
                             stopped_yielded = True
                         else:
-                            yield ErrorFrame(f"Chatterbox WS TTS error: {e}")
+                            yield ErrorFrame(f"Dia WS TTS error: {e}")
                         break
 
                     if isinstance(msg, (bytes, bytearray)):
@@ -254,7 +252,8 @@ class ChatterboxTTSService(InterruptibleTTSService):
                             break
                         if not synthesis_started:
                             logger.debug("run_tts: drop PCM before started")
-                            continue
+                            # continue
+                            synthesis_started = True
                         if not ttfb_stopped:
                             ttfb_stopped = True
                             with suppress(Exception):
@@ -293,7 +292,7 @@ class ChatterboxTTSService(InterruptibleTTSService):
                     stopped_yielded = True
 
             except Exception as e:
-                yield ErrorFrame(f"Chatterbox WS TTS error: {e}")
+                yield ErrorFrame(f"Dia WS TTS error: {e}")
 
             finally:
                 with suppress(Exception):

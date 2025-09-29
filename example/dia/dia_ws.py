@@ -1,4 +1,4 @@
-# chatterbox_server.py
+# dia_server.py
 import asyncio
 import os
 from piopiy.agent import Agent
@@ -8,7 +8,8 @@ from piopiy.voice_agent import VoiceAgent
 from dotenv import load_dotenv
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.audio.vad.silero import SileroVADAnalyzer
-from piopiy.services.opensource.chatterbox.tts import ChatterboxTTSService
+from piopiy.services.opensource.dia.tts import DiaTTSService
+
 load_dotenv()
 
 async def create_session():
@@ -22,21 +23,21 @@ async def create_session():
         ),
         greeting="Hello Good Morning Welcome to TeleCMI, how can I help you today?"
     )
-
+    
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
-    tts = ChatterboxTTSService(base_url="ws://localhost:6078", sample_rate=24000)
-
- 
+    tts = DiaTTSService(base_url="ws://localhost:6078", sample_rate=44100)
     vad = SileroVADAnalyzer()
-
-
-    await voice_agent.AgentAction(stt=stt, llm=llm, tts=tts, vad=vad, allow_interruptions=True, interruption_strategy=MinWordsInterruptionStrategy(min_words=1))
+    
+    await voice_agent.AgentAction(
+        stt=stt, 
+        llm=llm, 
+        tts=tts, 
+        vad=vad, 
+        allow_interruptions=True, 
+        interruption_strategy=MinWordsInterruptionStrategy(min_words=1)
+    )
     await voice_agent.start()
-
-
-
-
 
 async def main():
     # await preload_model()
@@ -50,4 +51,3 @@ async def main():
 if __name__ == "__main__":
     print(os.getenv("AGENT_ID"))
     asyncio.run(main())
-
