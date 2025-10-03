@@ -57,7 +57,7 @@ async def create_session():
     voice_agent.add_tool(weather_function, get_current_weather)
 
     vad = SileroVADAnalyzer()
-    await voice_agent.AgentAction(
+    await voice_agent.Action(
         stt=stt,
         llm=llm,
         tts=tts,

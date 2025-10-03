@@ -24,7 +24,7 @@ async def create_session():
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
     tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"), voice_id="bdab08ad-4137-4548-b9db-6142854c7525")
 
-    await voice_agent.AgentAction(stt=stt, llm=llm, tts=tts, vad=True, allow_interruptions=True, interruption_strategy=MinWordsInterruptionStrategy(min_words=1))
+    await voice_agent.Action(stt=stt, llm=llm, tts=tts, vad=True, allow_interruptions=True, interruption_strategy=MinWordsInterruptionStrategy(min_words=1))
     await voice_agent.start()
 
 

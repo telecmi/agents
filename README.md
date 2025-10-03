@@ -1,7 +1,7 @@
 # PIOPIY AI
 Build Telephonic-Grade Voice AI — WebRTC-Ready Framework
 
-Piopiy AI is an all-in-one platform for creating telephony-ready voice agents. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity. The SDK plugs into your agent logic and supports many LLM, STT, and TTS providers so you can focus on conversation design.
+Piopiy AI is an open-source, telephony-grade framework for building real-time voice agents that blend large language models (LLM), automatic speech recognition (ASR), and text-to-speech (TTS) engines. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity while you focus on conversation design. Combine cloud or open-source providers to tailor the voice stack to your latency, privacy, and cost targets.
 
 ## Installation
 
@@ -42,7 +42,7 @@ async def create_session():
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
     tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"))
 
-    await voice_agent.AgentAction(stt=stt, llm=llm, tts=tts)
+    await voice_agent.Action(stt=stt, llm=llm, tts=tts)
     await voice_agent.start()
 
 
@@ -116,6 +116,49 @@ pip install "piopiy-ai[silero]"
 
 Silero VAD detects speech during playback, allowing callers to interrupt the agent.
 
+## Open-Source Voice Stack (LLM + ASR + TTS)
+
+Pair Piopiy’s realtime orchestration with open-source engines across the full speech stack:
+
+| Layer | Default | Alternatives |
+|-------|---------|--------------|
+| **LLM** | [Ollama](https://ollama.ai) running `llama3.1` (or another local model) | [LM Studio](https://lmstudio.ai), [GPT4All](https://gpt4all.io) via Ollama-compatible APIs |
+| **ASR** | `WhisperSTTService` with Whisper small/medium models | [`mlx-whisper`](https://github.com/ml-explore/mlx-examples/tree/main/whisper) for Apple silicon |
+| **TTS** | `ChatterboxTTSService` pointed at a self-hosted [Chatterbox TTS](https://github.com/piopiy-ai/chatterbox-tts) server | Piper, XTTS, Kokoro |
+
+Install the optional dependencies and runtimes:
+
+```bash
+pip install "piopiy-ai[whisper]"
+# Install and run Ollama separately: https://ollama.ai
+# Start the Chatterbox TTS WebSocket server (https://github.com/piopiy-ai/chatterbox-tts)
+```
+
+Example session factory using the open-source trio:
+
+```python
+from piopiy.voice_agent import VoiceAgent
+from piopiy.services.whisper.stt import WhisperSTTService
+from piopiy.services.ollama.llm import OLLamaLLMService
+from piopiy.services.opensource.chatterbox.tts import ChatterboxTTSService
+
+
+async def create_session():
+    voice_agent = VoiceAgent(
+        instructions="You are a helpful local-first voice assistant.",
+        greeting="Hi there! Running fully on open-source models today.",
+    )
+
+    stt = WhisperSTTService(model="small")
+    llm = OLLamaLLMService(model="llama3.1")  # points to your local Ollama runtime
+    tts = ChatterboxTTSService(base_url="ws://localhost:6078")
+
+    await voice_agent.Action(stt=stt, llm=llm, tts=tts, vad=True)
+    await voice_agent.start()
+```
+
+Swap in other open-source providers such as Piper, XTTS, or Kokoro for TTS, and adjust the Chatterbox base URL or voice ID for your deployment. You can also run Whisper on Apple silicon with the `mlx-whisper` extra. Piopiy's abstraction layer lets you mix these with managed services whenever needed.
+
 ## Telephony Integration
 
 Connect phone calls in minutes using the Piopiy dashboard:
@@ -126,16 +169,5 @@ Connect phone calls in minutes using the Piopiy dashboard:
 
 No SIP setup or third-party telephony vendors are required—Piopiy handles the calls so you can focus on your agent logic.
 
-Thanks to Pepicat for making client SDK implementation easy.
+Thanks to Pipecat for making client SDK implementation easy.
 
-
-
-## Kokoro Model Download
-
-To download kokoro onnx model run the command  after running the 
-
-`pip install -e .`
-
-```
-download-kokoro
-``` 
