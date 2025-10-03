@@ -210,6 +210,10 @@ class UltravoxService(AIService):
             # send
             await self._send_json(req)
 
+            # ---------- FIX for cumulative text issue ----------
+            previous_text = ""
+            # ---------- FIX for cumulative text issue ----------
+
             # receive loop (non-persistent is also supported)
             while True:
                 if not self._persist:
@@ -224,18 +228,51 @@ class UltravoxService(AIService):
                 elif mtype == "partial":
                     # first arrival => stop TTFB
                     await self.stop_ttfb_metrics()
-                    text = (data.get("text") or "").strip()
-                    if text:
-                        yield LLMTextFrame(text=text)
+                    # text = (data.get("text") or "").strip()
+                    # if text:
+                    #     yield LLMTextFrame(text=text)
+
+                    # ---------- FIX for cumulative text issue ----------
+                    # Get cumulative text from server
+                    cumulative_text = (data.get("text") or "").strip()
+
+                    # Compute the delta (new text only)
+                    if cumulative_text.startswith(previous_text):
+                        delta = cumulative_text[len(previous_text):]
+                    else:
+                        # Fallback if text doesn't build cumulatively (shouldn't happen)
+                        delta = cumulative_text
+                    
+                    previous_text = cumulative_text
+                    
+                    # Only yield if there's new text
+                    if delta:
+                        yield LLMTextFrame(text=delta)
+                    # ---------- FIX for cumulative text issue ----------
                 elif mtype == "completed":
                     await self.stop_processing_metrics()
-                    text = (data.get("text") or "").strip()
-                    if text:
-                        # final flush already sent in partials; nothing extra needed
-                        pass
+                    # text = (data.get("text") or "").strip()
+                    # if text:
+                    #     # final flush already sent in partials; nothing extra needed
+                    #     pass
+                    # yield LLMFullResponseEndFrame()
+                    # done.set()
+                    # break
+
+                    # ---------- FIX for cumulative text issue ----------
+                    # Get final text
+                    final_text = (data.get("text") or "").strip()
+                    
+                    # Check if there's any remaining text not yet sent
+                    if final_text.startswith(previous_text):
+                        delta = final_text[len(previous_text):]
+                        if delta:
+                            yield LLMTextFrame(text=delta)
+                    
                     yield LLMFullResponseEndFrame()
                     done.set()
                     break
+                    # ---------- FIX for cumulative text issue ----------
                 elif mtype == "error":
                     await self.stop_processing_metrics()
                     yield ErrorFrame(f"Ultravox LLM error: {data.get('error')}")
