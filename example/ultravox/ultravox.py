@@ -9,7 +9,8 @@ from piopiy.audio.vad.silero import SileroVADAnalyzer
 from piopiy.services.opensource.orpheus.tts import OrpheusTTS
 from piopiy.transcriptions.language import Language
 from piopiy.speech_agent import SpeechAgent
-from piopiy.services.cartesia.tts import CartesiaTTSService
+# from piopiy.services.cartesia.tts import CartesiaTTSService
+from piopiy.services.deepgram.tts import DeepgramTTSService
 from piopiy.services.opensource.ultravox.omni import UltravoxService  # <-- your omni runtime
 
 load_dotenv()
@@ -23,18 +24,28 @@ async def create_session():
             "Provide clear, concise, and persuasive information to help them make informed decisions. "
             "Always be courteous, professional, and ready to assist with any sales-related inquiries."
         ),
-        greeting="Hello, good morning! Welcome to TeleCMI — how can I help you today?"
+        greeting="Hello, good morning! I am Tara from Telecmi you had inquired at our website regarding the products is it a good time to talk to you?"
     )
 
     # --- OMNI (Ultravox) — single speech runtime (no separate STT/LLM) ---
     omni = UltravoxService(
-        server_url="ws://192.168.0.120:8766",
+        server_url="ws://0.0.0.0:8766",
         language=Language.EN,
-        # if your omni supports prompt/config directly, pass it here:
-        system_prompt=(
-            "You are an advanced voice AI sales assistant for a CRM platform. "
-            "Be proactive, clear, concise, and persuasive."
-        ),
+        # system_prompt=(
+        #     '''You are an advanced voice AI sales assistant for a CRM platform.Be proactive, clear, concise, and persuasive.
+            
+        #     This is the format in which you have to give the response in **JSON FORMAT**
+        #     ** OUTPUT FORMAT **
+        #     ```
+        #     {
+        #     "function_call":<Boolean>
+        #     "response":"<YOUR RESPONSE>",
+        #     "question":"<What has User Asked"
+        #     }
+        #     ```
+        #     '''
+            
+        # ),
         temperature=0.7,
         max_tokens=200
         # add any tool/memory wiring your Ultravox omni supports
@@ -42,7 +53,7 @@ async def create_session():
 
     # --- TTS ---
     #tts = OrpheusTTS(base_url="ws://0.0.0.0:8765", sample_rate=24000)
-    tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"), voice_id="bdab08ad-4137-4548-b9db-6142854c7525")
+    tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY"))
 
     # --- Optional VAD (recommended for telephony) ---
     vad = SileroVADAnalyzer()

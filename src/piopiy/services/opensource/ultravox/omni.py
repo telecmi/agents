@@ -8,6 +8,7 @@ import base64
 import json
 import time
 import uuid
+import sys
 from typing import AsyncGenerator, Dict, List, Optional
 
 import numpy as np
@@ -50,7 +51,7 @@ class UltravoxService(AIService):
         *,
         server_url: str = "ws://localhost:8766",
         language: Language = Language.EN,
-        temperature: float = 0.7,
+        temperature: float = 0.2,
         max_tokens: int = 200,
         system_prompt: Optional[str] = None,
         persistent_connection: bool = True,
@@ -75,6 +76,22 @@ class UltravoxService(AIService):
 
     def can_generate_metrics(self) -> bool:
         return True
+
+    async def disconnet_client(self, caller_id: Optional[str] = 123456789):
+        if caller_id is None:
+            return
+        try:
+            logger.info(f"Disconnecting client {caller_id} from Ultravox server")
+        except Exception as e:
+            logger.warning(f"Failed to disconnect client {caller_id}: {e}")
+
+    async def transfer_client(self, caller_id: Optional[str] = 123456789):
+        if caller_id is None:
+            return
+        try:
+            logger.info(f"Tranfering client {caller_id} to real agent from Ultravox server")
+        except Exception as e:
+            logger.warning(f"Failed to disconnect client {caller_id}: {e}")
 
     async def start(self, frame: StartFrame):
         await super().start(frame)
@@ -183,7 +200,7 @@ class UltravoxService(AIService):
             messages = []
             if self._sys:
                 messages.append({"role":"system","content": self._sys})
-            # IMPORTANT: the server expects <|audio|> to anchor audio modality
+
             messages.append({"role":"user","content":"<|audio|>\n"})
 
             rid = f"uvx-{uuid.uuid4()}"
@@ -210,6 +227,10 @@ class UltravoxService(AIService):
             # send
             await self._send_json(req)
 
+            # ---------- FIX for cumulative text issue ----------
+            previous_text = ""
+            # ---------- FIX for cumulative text issue ----------
+
             # receive loop (non-persistent is also supported)
             while True:
                 if not self._persist:
@@ -224,18 +245,50 @@ class UltravoxService(AIService):
                 elif mtype == "partial":
                     # first arrival => stop TTFB
                     await self.stop_ttfb_metrics()
+
                     text = (data.get("text") or "").strip()
-                    if text:
-                        yield LLMTextFrame(text=text)
+                    text = text.replace("function_call","")  
+                    cumulative_text = text
+
+                    # Compute the delta (new text only)
+                    if cumulative_text.startswith(previous_text):
+                        delta = cumulative_text[len(previous_text):]
+                    else:
+                        # Fallback if text doesn't build cumulatively (shouldn't happen)
+                        delta = cumulative_text
+                    
+                    previous_text = cumulative_text
+                    if  "function_call" not in delta and delta:
+                        
+                    # Only yield if there's new text
+                    # if delta:
+                        yield LLMTextFrame(text=delta)
+                    # ---------- FIX for cumulative text issue ----------
                 elif mtype == "completed":
                     await self.stop_processing_metrics()
-                    text = (data.get("text") or "").strip()
-                    if text:
-                        # final flush already sent in partials; nothing extra needed
-                        pass
+                    # text = (data.get("text") or "").strip()
+                    # if text:
+                    #     # final flush already sent in partials; nothing extra needed
+                    #     pass
+                    # yield LLMFullResponseEndFrame()
+                    # done.set()
+                    # break
+
+                    # ---------- FIX for cumulative text issue ----------
+                    # Get final text
+                    final_text = (data.get("text") or "").strip()
+                    
+                    yield  LLMTextFrame(text=final_text)
+                    # Check if there's any remaining text not yet sent
+                    # if final_text.startswith(previous_text):
+                    #     delta = final_text[len(previous_text):]
+                    #     if delta:
+                    #         yield LLMTextFrame(text=delta)
+                    
                     yield LLMFullResponseEndFrame()
                     done.set()
                     break
+                    # ---------- FIX for cumulative text issue ----------
                 elif mtype == "error":
                     await self.stop_processing_metrics()
                     yield ErrorFrame(f"Ultravox LLM error: {data.get('error')}")
@@ -247,7 +300,28 @@ class UltravoxService(AIService):
                     yield LLMFullResponseEndFrame()
                     done.set()
                     break
+                elif mtype == "disconnect":
+                    logger.info(f"###########Received disconnect command from server: {data}")
+                    await self.stop_processing_metrics()
+                    text = data["text"]
+                    yield LLMTextFrame(text=text)
+                    yield LLMFullResponseEndFrame()
+                    done.set()
+                    await self._disconnect()
+                    await self.disconnet_client()
+                    break
 
+                elif mtype == "transfer":
+                    logger.info(f"###########Received tranfer command from server: {data}")
+                    await self.stop_processing_metrics()
+                    text = data["text"]
+                    yield LLMTextFrame(text=text)
+                    yield LLMFullResponseEndFrame()
+                    done.set()
+                    await self._disconnect()
+                    await self.transfer_client()
+                    break
+                
             # if non-persistent, close after each call
             if not self._persist:
                 await self._disconnect()
