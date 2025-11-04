@@ -22,6 +22,7 @@ from piopiy.audio.turn.base_turn_analyzer import BaseTurnAnalyzer
 from piopiy.audio.vad.vad_analyzer import VADAnalyzer
 from piopiy.processors.frame_processor import FrameProcessor
 from piopiy.utils.base_object import BaseObject
+from piopiy.audio.turn.smart_turn.local_smart_turn_v3 import LocalSmartTurnAnalyzerV3
 
 
 class TransportParams(BaseModel):
@@ -149,7 +150,7 @@ class TransportParams(BaseModel):
     vad_enabled: bool = False
     vad_audio_passthrough: bool = False
     vad_analyzer: Optional[VADAnalyzer] = None
-    turn_analyzer: Optional[BaseTurnAnalyzer] = None
+    turn_analyzer: Optional[LocalSmartTurnAnalyzerV3] = None
 
 
 class BaseTransport(BaseObject):
