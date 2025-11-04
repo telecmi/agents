@@ -2,10 +2,12 @@
 # Copyright (c) 2024–2025, TeleCMI
 # SPDX-License-Identifier: BSD 2-Clause License
 
-
+import os
 import asyncio
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from dotenv import load_dotenv
+load_dotenv()
 
 from loguru import logger
 from pydantic import BaseModel
@@ -27,6 +29,8 @@ from piopiy.transports.base_input import BaseInputTransport
 from piopiy.transports.base_output import BaseOutputTransport
 from piopiy.transports.base_transport import BaseTransport, TransportParams
 from piopiy.utils.asyncio.task_manager import BaseTaskManager
+from piopiy.audio.filters.base_audio_filter import BaseAudioFilter
+from piopiy.audio.filters.krisp_viva_filter import KrispVivaFilter
 
 try:
     from livekit import rtc
@@ -477,13 +481,25 @@ class TelecmiInputTransport(BaseInputTransport):
         super().__init__(params, **kwargs)
         self._transport = transport
         self._client = client
+        self._model_path = os.getenv("KRISP_MODEL_PATH")
 
         self._audio_in_task: Optional[asyncio.Task] = None
         self._vad_analyzer: Optional[VADAnalyzer] = params.vad_analyzer
+        # ---------- Get the filter from params: ----------
+        # self._audio_filter: Optional[BaseAudioFilter] = params.audio_in_filter
+        self._audio_filter = KrispVivaFilter(
+                model_path=self._model_path,
+                noise_suppression_level=100
+            )
+        # -------------------------------------------------
         self._resampler = create_stream_resampler()
 
         # Whether we have seen a StartFrame already.
         self._initialized = False
+
+        # ---- Track if filter is started: ----
+        self._filter_started = False
+        # -------------------------------------
 
     @property
     def vad_analyzer(self) -> Optional[VADAnalyzer]:
@@ -499,6 +515,14 @@ class TelecmiInputTransport(BaseInputTransport):
 
         await self._client.start(frame)
         await self._client.connect()
+
+        # --------- Start the audio filter if present: ---------
+        if self._audio_filter and not self._filter_started:
+            await self._audio_filter.start(self._params.audio_in_sample_rate or frame.audio_in_sample_rate)
+            self._filter_started = True
+            logger.info(f"Audio filter started: {type(self._audio_filter).__name__}")
+        # ------------------------------------------------------
+
         if not self._audio_in_task and self._params.audio_in_enabled:
             self._audio_in_task = self.create_task(self._audio_in_task_handler())
         await self.set_transport_ready(frame)
@@ -507,6 +531,12 @@ class TelecmiInputTransport(BaseInputTransport):
     async def stop(self, frame: EndFrame):
         await super().stop(frame)
         await self._client.disconnect()
+
+        # ------ Stop the audio filter: ------
+        if self._audio_filter and self._filter_started:
+            await self._audio_filter.stop()
+            self._filter_started = False
+        # -----------------------------------
         if self._audio_in_task:
             await self.cancel_task(self._audio_in_task)
             self._audio_in_task = None
@@ -515,6 +545,12 @@ class TelecmiInputTransport(BaseInputTransport):
     async def cancel(self, frame: CancelFrame):
         await super().cancel(frame)
         await self._client.disconnect()
+
+        # ------- Stop the audio filter on cancel: -------
+        if self._audio_filter and self._filter_started:
+            await self._audio_filter.stop()
+            self._filter_started = False
+        # -----------------------------------------------
         if self._audio_in_task and self._params.audio_in_enabled:
             await self.cancel_task(self._audio_in_task)
             self._audio_in_task = None
@@ -545,14 +581,34 @@ class TelecmiInputTransport(BaseInputTransport):
                 if len(pipecat_audio_frame.audio) == 0:
                     continue
 
+                #  ----------- Apply audio filter if present: -----------
+                filtered_audio = pipecat_audio_frame.audio
+                logger.info(f"Audio type {type(filtered_audio)}")
+
+                if self._audio_filter and self._filter_started:
+                    try:
+                        filtered_audio = await self._audio_filter.filter(filtered_audio)
+                        # If filter returns empty bytes (buffering), skip this frame
+                        if len(filtered_audio) == 0:
+                            continue
+                    except Exception as e:
+                        logger.error(f"Error applying audio filter: {e}")
+                        # Fall back to unfiltered audio on error
+                        filtered_audio = pipecat_audio_frame.audio
+                # --------------------------------------------------------
+
                 input_audio_frame = UserAudioRawFrame(
                     user_id=participant_id,
-                    audio=pipecat_audio_frame.audio,
+                    # ----- Change audio to filtered audio -----
+                    # audio=pipecat_audio_frame.audio,
+                    audio=filtered_audio,
+                    # ------------------------------------------
                     sample_rate=pipecat_audio_frame.sample_rate,
                     num_channels=pipecat_audio_frame.num_channels,
                 )
                 await self.push_audio_frame(input_audio_frame)
-
+                
+    
     async def _convert_telecmi_audio_to_pipecat(
         self, audio_frame_event: rtc.AudioFrameEvent
     ) -> AudioRawFrame:
