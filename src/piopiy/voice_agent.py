@@ -4,6 +4,7 @@ from asyncio.log import logger
 from typing import Any, Awaitable, Callable, List, Optional, Mapping, Dict
 import math
 
+
 from piopiy.adapters.schemas.function_schema import FunctionSchema
 from piopiy.adapters.schemas.tools_schema import ToolsSchema
 from piopiy.audio.vad.silero import SileroVADAnalyzer
@@ -17,6 +18,7 @@ from piopiy.audio.interruptions.base_interruption_strategy import BaseInterrupti
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.transports.base_transport import BaseTransport
 from piopiy.transports.services.telecmi import TelecmiParams, TelecmiTransport
+from piopiy.audio.filters.krisp_viva_filter import KrispVivaFilter
 
 try:
     from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
@@ -102,6 +104,7 @@ class VoiceAgent:
         self._llm: Optional[FrameProcessor] = None
         self._tts: Optional[FrameProcessor] = None
         self._vad: Optional[SileroVADAnalyzer] = None  # analyzer object we’ll inject
+        self.audio_filter: Optional[KrispVivaFilter] = None
 
         self._enable_metrics = False
         self._enable_usage_metrics = False
@@ -141,6 +144,10 @@ class VoiceAgent:
         allow_interruptions: bool = True,
         interruption_strategy: Optional[BaseInterruptionStrategy] = None,
         telecmi_params: Optional[TelecmiParams] = None,
+        #  ADD THIS PARAMETER:
+        enable_krisp: bool = False,
+        krisp_model_path: Optional[str] = None,
+        krisp_suppression_level: int = 30,
     ) -> None:
         """Store components and toggles; pipeline is built in start()."""
         self._stt = stt
@@ -151,7 +158,7 @@ class VoiceAgent:
         self._allow_interruptions = allow_interruptions
         self._interruption_strategy = interruption_strategy
         self._mcp_client = mcp_tools or None
-
+            
         # --- NEW: Build VAD analyzer from bool/dict or keep existing analyzer
         self._vad = None
         if isinstance(vad, SileroVADAnalyzer) or isinstance(vad, FrameProcessor):
@@ -166,6 +173,15 @@ class VoiceAgent:
             self._vad = SileroVADAnalyzer()
         # else: None/False => leave disabled
 
+        # ADD KRISP FILTER INITIALIZATION:
+        if enable_krisp:   
+            self.audio_filter = KrispVivaFilter(
+                model_path=krisp_model_path,
+                noise_suppression_level=krisp_suppression_level
+            )
+        else:
+            self.audio_filter = None
+
         # Build transport (VAD goes into TelecmiParams.vad_analyzer)
         if telecmi_params is None:
             telecmi_params = TelecmiParams(
@@ -174,6 +190,10 @@ class VoiceAgent:
                 audio_out_sample_rate=24000,
                 audio_in_sample_rate=16000,
             )
+
+        # ADD FILTER TO TRANSPORT:
+        if self.audio_filter:
+            telecmi_params.audio_in_filter = self.audio_filter
 
         # Inject analyzer (attribute may or may not exist; be defensive)
         try:
