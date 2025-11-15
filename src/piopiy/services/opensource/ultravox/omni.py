@@ -117,10 +117,11 @@ class UltravoxService(AIService):
         async with self._lock:
             if self._ws and not self._ws.closed:
                 return
+            headers = {"caller_id": "Tara"}
             self._ws = await websockets.connect(
-                self._url, ping_interval=self._ping_i, ping_timeout=self._ping_t, max_size=None
-            )
-
+                self._url, ping_interval=self._ping_i, ping_timeout=self._ping_t, max_size=None,extra_headers=headers)
+            await self._ws.send(json.dumps({"type": "connect", "caller_id": "Tara"}))
+            
     async def _disconnect(self):
         async with self._lock:
             if self._ws and not self._ws.closed:
@@ -195,6 +196,7 @@ class UltravoxService(AIService):
                 "temperature": self._temp,
                 "max_tokens": self._max_tokens,
                 "messages": messages,
+                "caller_id":"Tara"
             }
 
             # metrics
