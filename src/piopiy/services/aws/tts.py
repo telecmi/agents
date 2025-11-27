@@ -26,7 +26,7 @@ from piopiy.frames.frames import (
     TTSStoppedFrame,
 )
 from piopiy.services.tts_service import TTSService
-from piopiy.transcriptions.language import Language
+from piopiy.transcriptions.language import Language, resolve_language
 from piopiy.utils.tracing.service_decorators import traced_tts
 
 try:
@@ -47,7 +47,7 @@ def language_to_aws_language(language: Language) -> Optional[str]:
     Returns:
         The corresponding AWS Polly language code, or None if not supported.
     """
-    language_map = {
+    LANGUAGE_MAP = {
         # Arabic
         Language.AR: "arb",
         Language.AR_AE: "ar-AE",
@@ -119,7 +119,7 @@ def language_to_aws_language(language: Language) -> Optional[str]:
         Language.CY_GB: "cy-GB",
     }
 
-    return language_map.get(language)
+    return resolve_language(language, LANGUAGE_MAP, use_base_code=False)
 
 
 class AWSPollyTTSService(TTSService):

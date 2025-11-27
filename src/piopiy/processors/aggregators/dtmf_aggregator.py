@@ -14,17 +14,16 @@ for downstream processing by LLM context aggregators.
 import asyncio
 from typing import Optional
 
+from piopiy.audio.dtmf.types import KeypadEntry
 from piopiy.frames.frames import (
-    BotInterruptionFrame,
     CancelFrame,
     EndFrame,
     Frame,
     InputDTMFFrame,
-    KeypadEntry,
     StartFrame,
     TranscriptionFrame,
 )
-from piopiy.processors.frame_processor import FrameDirection, FrameProcessor, FrameProcessorSetup
+from piopiy.processors.frame_processor import FrameDirection, FrameProcessor
 from piopiy.utils.time import time_now_iso8601
 
 
@@ -105,7 +104,7 @@ class DTMFAggregator(FrameProcessor):
 
         # For first digit, schedule interruption.
         if is_first_digit:
-            await self.push_frame(BotInterruptionFrame(), FrameDirection.UPSTREAM)
+            await self.push_interruption_task_frame_and_wait()
 
         # Check for immediate flush conditions
         if frame.button == self._termination_digit:

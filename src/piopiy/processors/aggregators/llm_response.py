@@ -12,7 +12,6 @@ LLM processing, and text-to-speech components in conversational AI pipelines.
 """
 
 import asyncio
-import warnings
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Dict, List, Literal, Optional, Set
@@ -23,7 +22,6 @@ from piopiy.audio.interruptions.base_interruption_strategy import BaseInterrupti
 from piopiy.audio.turn.smart_turn.base_smart_turn import SmartTurnParams
 from piopiy.audio.vad.vad_analyzer import VADParams
 from piopiy.frames.frames import (
-    BotInterruptionFrame,
     BotStartedSpeakingFrame,
     BotStoppedSpeakingFrame,
     CancelFrame,
@@ -37,6 +35,7 @@ from piopiy.frames.frames import (
     FunctionCallsStartedFrame,
     InputAudioRawFrame,
     InterimTranscriptionFrame,
+    InterruptionFrame,
     LLMFullResponseEndFrame,
     LLMFullResponseStartFrame,
     LLMMessagesAppendFrame,
@@ -49,7 +48,6 @@ from piopiy.frames.frames import (
     OpenAILLMContextAssistantTimestampFrame,
     SpeechControlParamsFrame,
     StartFrame,
-    StartInterruptionFrame,
     TextFrame,
     TranscriptionFrame,
     UserImageRawFrame,
@@ -91,7 +89,9 @@ class LLMAssistantAggregatorParams:
 
     Parameters:
         expect_stripped_words: Whether to expect and handle stripped words
-            in text frames by adding spaces between tokens.
+            in text frames by adding spaces between tokens. This parameter is
+            ignored when used with the newer LLMAssistantAggregator, which
+            handles word spacing automatically.
     """
 
     expect_stripped_words: bool = True
@@ -139,7 +139,7 @@ class LLMFullResponseAggregator(FrameProcessor):
         """
         await super().process_frame(frame, direction)
 
-        if isinstance(frame, StartInterruptionFrame):
+        if isinstance(frame, InterruptionFrame):
             await self._call_event_handler("on_completion", self._aggregation, False)
             self._aggregation = ""
             self._started = False
@@ -326,11 +326,15 @@ class LLMContextResponseAggregator(BaseLLMResponseAggregator):
         Returns:
             LLMContextFrame containing the current context.
         """
-        warnings.warn(
-            "get_context_frame() is deprecated and will be removed in a future version. To trigger an LLM response, use LLMRunFrame instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("always")
+            warnings.warn(
+                "get_context_frame() is deprecated and will be removed in a future version. To trigger an LLM response, use LLMRunFrame instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return self._get_context_frame()
 
     def _get_context_frame(self) -> OpenAILLMContextFrame:
@@ -529,9 +533,9 @@ class LLMUserContextAggregator(LLMContextResponseAggregator):
 
                 if should_interrupt:
                     logger.debug(
-                        "Interruption conditions met - pushing BotInterruptionFrame and aggregation"
+                        "Interruption conditions met - pushing interruption and aggregation"
                     )
-                    await self.push_frame(BotInterruptionFrame(), FrameDirection.UPSTREAM)
+                    await self.push_interruption_task_frame_and_wait()
                     await self._process_aggregation()
                 else:
                     logger.debug("Interruption conditions not met - not pushing aggregation")
@@ -835,7 +839,7 @@ class LLMAssistantContextAggregator(LLMContextResponseAggregator):
         """
         await super().process_frame(frame, direction)
 
-        if isinstance(frame, StartInterruptionFrame):
+        if isinstance(frame, InterruptionFrame):
             await self._handle_interruptions(frame)
             await self.push_frame(frame, direction)
         elif isinstance(frame, LLMFullResponseStartFrame):
@@ -901,7 +905,7 @@ class LLMAssistantContextAggregator(LLMContextResponseAggregator):
         if frame.run_llm:
             await self.push_context_frame(FrameDirection.UPSTREAM)
 
-    async def _handle_interruptions(self, frame: StartInterruptionFrame):
+    async def _handle_interruptions(self, frame: InterruptionFrame):
         await self.push_aggregation()
         self._started = 0
         await self.reset()
@@ -1035,12 +1039,16 @@ class LLMUserResponseAggregator(LLMUserContextAggregator):
             params: Configuration parameters for aggregation behavior.
             **kwargs: Additional arguments passed to parent class.
         """
-        warnings.warn(
-            "LLMUserResponseAggregator is deprecated and will be removed in a future version. "
-            "Use LLMUserContextAggregator or another LLM-specific subclass instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("always")
+            warnings.warn(
+                "LLMUserResponseAggregator is deprecated and will be removed in a future version. "
+                "Use LLMUserContextAggregator or another LLM-specific subclass instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         super().__init__(context=OpenAILLMContext(messages), params=params, **kwargs)
 
     async def _process_aggregation(self):
@@ -1078,12 +1086,16 @@ class LLMAssistantResponseAggregator(LLMAssistantContextAggregator):
             params: Configuration parameters for aggregation behavior.
             **kwargs: Additional arguments passed to parent class.
         """
-        warnings.warn(
-            "LLMAssistantResponseAggregator is deprecated and will be removed in a future version. "
-            "Use LLMAssistantContextAggregator or another LLM-specific subclass instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("always")
+            warnings.warn(
+                "LLMAssistantResponseAggregator is deprecated and will be removed in a future version. "
+                "Use LLMAssistantContextAggregator or another LLM-specific subclass instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         super().__init__(context=OpenAILLMContext(messages), params=params, **kwargs)
 
     async def push_aggregation(self):

@@ -15,7 +15,7 @@ from piopiy.frames.frames import (
     Frame,
     InputAudioRawFrame,
     OutputAudioRawFrame,
-    TransportMessageFrame,
+    UserSpeakingFrame,
 )
 from piopiy.processors.frame_processor import FrameDirection, FrameProcessor
 
@@ -36,9 +36,9 @@ class FrameLogger(FrameProcessor):
         color: Optional[str] = None,
         ignored_frame_types: Tuple[Type[Frame], ...] = (
             BotSpeakingFrame,
+            UserSpeakingFrame,
             InputAudioRawFrame,
             OutputAudioRawFrame,
-            TransportMessageFrame,
         ),
     ):
         """Initialize the frame logger.

@@ -9,6 +9,7 @@ import sys
 from piopiy.services import DeprecatedModuleProxy
 
 from .llm import *
+from .nova_sonic import *
 from .stt import *
 from .tts import *
 

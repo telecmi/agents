@@ -24,16 +24,15 @@ from piopiy.frames.frames import (
     EndFrame,
     ErrorFrame,
     Frame,
+    InterruptionFrame,
     StartFrame,
-    StartInterruptionFrame,
     TTSAudioRawFrame,
     TTSStartedFrame,
     TTSStoppedFrame,
 )
 from piopiy.processors.frame_processor import FrameDirection
 from piopiy.services.tts_service import AudioContextWordTTSService, TTSService
-from piopiy.transcriptions import language
-from piopiy.transcriptions.language import Language
+from piopiy.transcriptions.language import Language, resolve_language
 from piopiy.utils.text.base_text_aggregator import BaseTextAggregator
 from piopiy.utils.text.skip_tags_aggregator import SkipTagsAggregator
 from piopiy.utils.tracing.service_decorators import traced_tts
@@ -61,8 +60,9 @@ def language_to_rime_language(language: Language) -> str:
         Language.FR: "fra",
         Language.EN: "eng",
         Language.ES: "spa",
+        Language.HI: "hin",
     }
-    return LANGUAGE_MAP.get(language, "eng")
+    return resolve_language(language, LANGUAGE_MAP, use_base_code=False)
 
 
 class RimeTTSService(AudioContextWordTTSService):
@@ -256,8 +256,11 @@ class RimeTTSService(AudioContextWordTTSService):
             url = f"{self._url}?{params}"
             headers = {"Authorization": f"Bearer {self._api_key}"}
             self._websocket = await websocket_connect(url, additional_headers=headers)
+
+            await self._call_event_handler("on_connected")
         except Exception as e:
-            logger.error(f"{self} initialization error: {e}")
+            logger.error(f"{self} exception: {e}")
+            await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
             self._websocket = None
             await self._call_event_handler("on_connection_error", f"{e}")
 
@@ -269,10 +272,12 @@ class RimeTTSService(AudioContextWordTTSService):
                 await self._websocket.send(json.dumps(self._build_eos_msg()))
                 await self._websocket.close()
         except Exception as e:
-            logger.error(f"{self} error closing websocket: {e}")
+            logger.error(f"{self} exception: {e}")
+            await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
         finally:
             self._context_id = None
             self._websocket = None
+            await self._call_event_handler("on_disconnected")
 
     def _get_websocket(self):
         """Get active websocket connection or raise exception."""
@@ -280,7 +285,7 @@ class RimeTTSService(AudioContextWordTTSService):
             return self._websocket
         raise Exception("Websocket not connected")
 
-    async def _handle_interruption(self, frame: StartInterruptionFrame, direction: FrameDirection):
+    async def _handle_interruption(self, frame: InterruptionFrame, direction: FrameDirection):
         """Handle interruption by clearing current context."""
         await super()._handle_interruption(frame, direction)
         await self.stop_all_metrics()
@@ -323,7 +328,7 @@ class RimeTTSService(AudioContextWordTTSService):
             return
 
         logger.trace(f"{self}: flushing audio")
-        await self._get_websocket().send(json.dumps({"text": " "}))
+        await self._get_websocket().send(json.dumps({"operation": "flush"}))
         self._context_id = None
 
     async def _receive_messages(self):
@@ -364,7 +369,7 @@ class RimeTTSService(AudioContextWordTTSService):
                 logger.error(f"{self} error: {msg}")
                 await self.push_frame(TTSStoppedFrame())
                 await self.stop_all_metrics()
-                await self.push_error(ErrorFrame(f"{self} error: {msg['message']}"))
+                await self.push_error(ErrorFrame(error=f"{self} error: {msg['message']}"))
                 self._context_id = None
 
     async def push_frame(self, frame: Frame, direction: FrameDirection = FrameDirection.DOWNSTREAM):
@@ -375,7 +380,7 @@ class RimeTTSService(AudioContextWordTTSService):
             direction: The direction to push the frame.
         """
         await super().push_frame(frame, direction)
-        if isinstance(frame, (TTSStoppedFrame, StartInterruptionFrame)):
+        if isinstance(frame, (TTSStoppedFrame, InterruptionFrame)):
             if isinstance(frame, TTSStoppedFrame):
                 await self.add_word_timestamps([("Reset", 0)])
 
@@ -406,7 +411,8 @@ class RimeTTSService(AudioContextWordTTSService):
                 await self._get_websocket().send(json.dumps(msg))
                 await self.start_tts_usage_metrics(text)
             except Exception as e:
-                logger.error(f"{self} error sending message: {e}")
+                logger.error(f"{self} exception: {e}")
+                yield ErrorFrame(error=f"{self} error: {e}")
                 yield TTSStoppedFrame()
                 await self._disconnect()
                 await self._connect()
@@ -414,6 +420,7 @@ class RimeTTSService(AudioContextWordTTSService):
             yield None
         except Exception as e:
             logger.error(f"{self} exception: {e}")
+            yield ErrorFrame(error=f"{self} error: {e}")
 
 
 class RimeHttpTTSService(TTSService):
@@ -554,18 +561,16 @@ class RimeHttpTTSService(TTSService):
 
                 CHUNK_SIZE = self.chunk_size
 
-                async for chunk in response.content.iter_chunked(CHUNK_SIZE):
-                    if need_to_strip_wav_header and chunk.startswith(b"RIFF"):
-                        chunk = chunk[44:]
-                        need_to_strip_wav_header = False
+                async for frame in self._stream_audio_frames_from_iterator(
+                    response.content.iter_chunked(CHUNK_SIZE),
+                    strip_wav_header=need_to_strip_wav_header,
+                ):
+                    await self.stop_ttfb_metrics()
+                    yield frame
 
-                    if len(chunk) > 0:
-                        await self.stop_ttfb_metrics()
-                        frame = TTSAudioRawFrame(chunk, self.sample_rate, 1)
-                        yield frame
         except Exception as e:
-            logger.exception(f"Error generating TTS: {e}")
-            yield ErrorFrame(error=f"Rime TTS error: {str(e)}")
+            logger.error(f"{self} exception: {e}")
+            yield ErrorFrame(error=f"{self} error: {e}")
         finally:
             await self.stop_ttfb_metrics()
             yield TTSStoppedFrame()

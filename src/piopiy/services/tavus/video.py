@@ -23,18 +23,18 @@ from piopiy.frames.frames import (
     CancelFrame,
     EndFrame,
     Frame,
+    InterruptionFrame,
     OutputAudioRawFrame,
     OutputImageRawFrame,
     OutputTransportReadyFrame,
     SpeechOutputAudioRawFrame,
     StartFrame,
-    StartInterruptionFrame,
     TTSAudioRawFrame,
     TTSStartedFrame,
 )
 from piopiy.processors.frame_processor import FrameDirection, FrameProcessorSetup
 from piopiy.services.ai_service import AIService
-from piopiy.transports.services.tavus import TavusCallbacks, TavusParams, TavusTransportClient
+from piopiy.transports.tavus.transport import TavusCallbacks, TavusParams, TavusTransportClient
 
 
 class TavusVideoService(AIService):
@@ -222,7 +222,7 @@ class TavusVideoService(AIService):
         """
         await super().process_frame(frame, direction)
 
-        if isinstance(frame, StartInterruptionFrame):
+        if isinstance(frame, InterruptionFrame):
             await self._handle_interruptions()
             await self.push_frame(frame, direction)
         elif isinstance(frame, TTSAudioRawFrame):

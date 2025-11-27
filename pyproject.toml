@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piopiy-ai"
-version = "0.3.0"
+version = "0.4.0"
 description = "📞 Telephonic-Grade Voice AI — 🌐 WebRTC-ready framework"
 license = "BSD-2-Clause"
 license-files = ["LICENSE"]
@@ -13,6 +13,7 @@ requires-python = ">=3.10"
 keywords = ["telecmi", "audio", "telephone", "ai", "telephone-ai"]
 
 dependencies = [
+    "aiofiles>=24.1.0,<25",
     "aiohttp>=3.11.12,<4",
     "audioop-lts~=0.2.1; python_version>='3.13'",
     "docstring_parser~=0.16",
@@ -23,13 +24,13 @@ dependencies = [
     "Pillow>=11.1.0,<12",
     "protobuf~=5.29.3",
     "pydantic>=2.10.6,<3",
-    "livekit~=0.22.0",
-    "livekit-api~=0.8.2", 
+    "livekit~=1.0.13",
+    "livekit-api~=1.0.5", 
     "tenacity>=8.2.3,<10.0.0",
     "pyloudnorm~=0.1.1",
     "resampy~=0.4.3",
     "soxr~=0.5.0",
-    "openai>=1.74.0,<=1.99.1",
+    "openai>=1.74.0,<3",
     "wait_for2>=0.4.1; python_version<'3.12'",
     "numba==0.61.2",
     "python-socketio[asyncio_client]>=5.13.0",
@@ -109,11 +110,11 @@ dev = [
     "grpcio-tools~=1.67.1",
     "pip-tools~=7.4.1",
     "pre-commit~=4.2.0",
-    "pyright~=1.1.402",
+    "pyright>=1.1.404,<1.2",
     "pytest~=8.4.1",
-    "pytest-asyncio~=1.0.0",
+    "pytest-asyncio~=1.1.0",
     "pytest-aiohttp==1.1.0",
-    "ruff~=0.12.1",
+    "ruff>=0.12.11,<1",
     "setuptools~=78.1.1",
     "setuptools_scm~=8.3.1",
     "python-dotenv>=1.0.1,<2.0.0",
@@ -134,7 +135,23 @@ where = ["src"]
 "piopiy" = ["py.typed"]
 "piopiy.transports.services.telecmi" = ["src/piopiy/transports/services/telecmi/ready.wav"]
 "piopiy.services.opensource.kokoro" = ["data/*.onnx", "data/*.bin"]
-
+"piopiy.audio.dtmf" = [
+    "src/piopiy/audio/dtmf/dtmf-0.wav",
+    "src/piopiy/audio/dtmf/dtmf-1.wav",
+    "src/piopiy/audio/dtmf/dtmf-2.wav",
+    "src/piopiy/audio/dtmf/dtmf-3.wav",
+    "src/piopiy/audio/dtmf/dtmf-4.wav",
+    "src/piopiy/audio/dtmf/dtmf-5.wav",
+    "src/piopiy/audio/dtmf/dtmf-6.wav",
+    "src/piopiy/audio/dtmf/dtmf-7.wav",
+    "src/piopiy/audio/dtmf/dtmf-8.wav",
+    "src/piopiy/audio/dtmf/dtmf-9.wav",
+    "src/piopiy/audio/dtmf/dtmf-pound.wav",
+    "src/piopiy/audio/dtmf/dtmf-star.wav",
+]
+"piopiy.services.aws_nova_sonic" = ["src/pipecat/services/aws_nova_sonic/ready.wav"]
+"piopiy.audio.turn.smart_turn.data" = ["src/pipecat/audio/turn/smart_turn/data/smart-turn-v3.0.onnx"]
+"piopiy.audio.vad" = ["data/silero_vad.onnx"]
 [tool.pytest.ini_options]
 addopts = "--verbose"
 testpaths = ["tests"]

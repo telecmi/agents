@@ -18,6 +18,7 @@ from piopiy.frames.frames import (
     LLMTextFrame,
 )
 from piopiy.metrics.metrics import LLMTokenUsage
+from piopiy.processors.aggregators.llm_context import LLMContext
 from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
 from piopiy.services.llm_service import FunctionCallFromLLM
 from piopiy.services.openai.llm import OpenAILLMService
@@ -99,7 +100,9 @@ class SambaNovaLLMService(OpenAILLMService):  # type: ignore
         return params
 
     @traced_llm  # type: ignore
-    async def _process_context(self, context: OpenAILLMContext) -> AsyncStream[ChatCompletionChunk]:
+    async def _process_context(
+        self, context: OpenAILLMContext | LLMContext
+    ) -> AsyncStream[ChatCompletionChunk]:
         """Process OpenAI LLM context and stream chat completion chunks.
 
         This method handles the streaming response from SambaNova API, including
@@ -122,9 +125,11 @@ class SambaNovaLLMService(OpenAILLMService):  # type: ignore
 
         await self.start_ttfb_metrics()
 
-        chunk_stream: AsyncStream[
-            ChatCompletionChunk
-        ] = await self._stream_chat_completions_specific_context(context)
+        chunk_stream = await (
+            self._stream_chat_completions_specific_context(context)
+            if isinstance(context, OpenAILLMContext)
+            else self._stream_chat_completions_universal_context(context)
+        )
 
         async for chunk in chunk_stream:
             if chunk.usage:
@@ -210,12 +215,3 @@ class SambaNovaLLMService(OpenAILLMService):  # type: ignore
                 )
 
             await self.run_function_calls(function_calls)
-
-    @property
-    def supports_universal_context(self) -> bool:
-        """Check if this service supports universal LLMContext.
-
-        Returns:
-            False, as SambaNovaLLMService does not yet support universal LLMContext.
-        """
-        return False

@@ -18,3 +18,5 @@ dist/
 *.onnx
 *.bin
 kokoro_models/
+.kia/
+build/
