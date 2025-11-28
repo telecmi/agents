@@ -81,16 +81,16 @@ class Agent:
                     # Build kwargs from the join payload for callers that accept them.
                     sig = inspect.signature(self.create_session)
                     kwargs = {}
-                    if "url" in sig.parameters:
-                        kwargs["url"] = url
-                    if "token" in sig.parameters:
-                        kwargs["token"] = token
-                    if "room_name" in sig.parameters:
-                        kwargs["room_name"] = room
-                    if "invite" in sig.parameters:
-                        kwargs["invite"] = invite
+                    if "call_id" in sig.parameters:
+                      kwargs["call_id"] = invite.get("call_id")
+                    if "agent_id" in sig.parameters:
+                        kwargs["agent_id"] = invite.get("agent_id")
+                    if "from_number" in sig.parameters:
+                        kwargs["from_number"] = invite.get("from_number")
+                    if "to_number" in sig.parameters:
+                        kwargs["to_number"] = invite.get("to_number")
 
-                    await self.create_session(**kwargs) if kwargs else await self.create_session()
+                    await self.create_session(**kwargs)
                 finally:
                     # Reset in reverse order (good hygiene)
                     ROOM_CTX.reset(tok_room)

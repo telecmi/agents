@@ -13,7 +13,13 @@ import dotenv
 
 dotenv.load_dotenv()
 
-async def create_session():
+async def create_session(call_id: str, agent_id: str, from_number: str, to_number: str):
+
+    call_id = call_id
+    agent_id = agent_id
+    from_number = from_number
+    to_number = to_number
+
     voice_agent = VoiceAgent(
         instructions="You are an advanced voice AI.",
         greeting="Hello! How can I help you today?",
