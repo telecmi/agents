@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: BSD 2-Clause License
 
 import asyncio
+import inspect
 import logging
 import signal
 from typing import Awaitable, Callable, Dict, Optional
@@ -28,7 +29,7 @@ class Agent:
         self,
         agent_id: str,
         agent_token: str,
-        create_session: Callable[[str, str, str], Awaitable[None]],
+        create_session: Callable[..., Awaitable[None]],
         signaling_url: Optional[str] = None,
     ):
         """
@@ -71,22 +72,36 @@ class Agent:
                 logger.warning("Session %s already running", room)
                 return
             
-            tok_url = URL_CTX.set(url)
-            tok_token = TOKEN_CTX.set(token)
-            tok_room = ROOM_CTX.set(room)
-            
-            try:
-                task = asyncio.create_task(
-                    self.create_session(),  # zero-arg; will read ContextVars
-                    name=f"session:{room}",
-                )
-            finally:
-                # Reset in reverse order (good hygiene)
-                ROOM_CTX.reset(tok_room)
-                TOKEN_CTX.reset(tok_token)
-                URL_CTX.reset(tok_url)
+            async def session_runner():
+                tok_url = URL_CTX.set(url)
+                tok_token = TOKEN_CTX.set(token)
+                tok_room = ROOM_CTX.set(room)
 
-           
+                try:
+                    # Build kwargs from the join payload for callers that accept them.
+                    sig = inspect.signature(self.create_session)
+                    kwargs = {}
+                    if "url" in sig.parameters:
+                        kwargs["url"] = url
+                    if "token" in sig.parameters:
+                        kwargs["token"] = token
+                    if "room_name" in sig.parameters:
+                        kwargs["room_name"] = room
+                    if "invite" in sig.parameters:
+                        kwargs["invite"] = invite
+
+                    await self.create_session(**kwargs) if kwargs else await self.create_session()
+                finally:
+                    # Reset in reverse order (good hygiene)
+                    ROOM_CTX.reset(tok_room)
+                    TOKEN_CTX.reset(tok_token)
+                    URL_CTX.reset(tok_url)
+
+            task = asyncio.create_task(
+                session_runner(),
+                name=f"session:{room}",
+            )
+
             self.active_sessions[room] = task
 
             # remove from registry when it finishes (success or error)
