@@ -3,7 +3,7 @@ import asyncio
 from asyncio.log import logger
 from typing import Any, Awaitable, Callable, List, Optional, Mapping, Dict
 import math
-
+import os
 
 from piopiy.adapters.schemas.function_schema import FunctionSchema
 from piopiy.adapters.schemas.tools_schema import ToolsSchema
@@ -144,9 +144,7 @@ class VoiceAgent:
         allow_interruptions: bool = True,
         interruption_strategy: Optional[BaseInterruptionStrategy] = None,
         telecmi_params: Optional[TelecmiParams] = None,
-        #  ADD THIS PARAMETER:
-        enable_krisp: bool = False,
-        krisp_model_path: Optional[str] = None,
+        enable_krisp: bool = True,
         krisp_suppression_level: int = 30,
     ) -> None:
         """Store components and toggles; pipeline is built in start()."""
@@ -173,15 +171,6 @@ class VoiceAgent:
             self._vad = SileroVADAnalyzer()
         # else: None/False => leave disabled
 
-        # ADD KRISP FILTER INITIALIZATION:
-        if enable_krisp:   
-            self.audio_filter = KrispVivaFilter(
-                model_path=krisp_model_path,
-                noise_suppression_level=krisp_suppression_level
-            )
-        else:
-            self.audio_filter = None
-
         # Build transport (VAD goes into TelecmiParams.vad_analyzer)
         if telecmi_params is None:
             telecmi_params = TelecmiParams(
@@ -191,9 +180,14 @@ class VoiceAgent:
                 audio_in_sample_rate=16000,
             )
 
-        # ADD FILTER TO TRANSPORT:
-        if self.audio_filter:
-            telecmi_params.audio_in_filter = self.audio_filter
+        if enable_krisp:
+            if not os.getenv("KRISP_MODEL_PATH"):
+                raise RuntimeError("KRISP_MODEL_PATH missing inside environment file")
+            telecmi_params.enable_krisp = True
+            telecmi_params.krisp_suppression_level = krisp_suppression_level
+        else:
+            telecmi_params.enable_krisp = False
+            telecmi_params.audio_in_filter = None
 
         # Inject analyzer (attribute may or may not exist; be defensive)
         try:

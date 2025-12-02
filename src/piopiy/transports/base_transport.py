@@ -28,6 +28,10 @@ class TransportParams(BaseModel):
     """Configuration parameters for transport implementations.
 
     Parameters:
+        enable_krisp: Enable the krisp filter
+        
+        krisp_suppression_level: How much suppression you need from krisp
+
         camera_in_enabled: Enable camera input (deprecated, use video_in_enabled).
 
             .. deprecated:: 0.0.66
@@ -115,7 +119,8 @@ class TransportParams(BaseModel):
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
+    enable_krisp: bool = False
+    krisp_suppression_level: int = 30
     camera_in_enabled: bool = False
     camera_out_enabled: bool = False
     camera_out_is_live: bool = False

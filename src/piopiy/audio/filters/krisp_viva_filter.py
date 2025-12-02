@@ -64,7 +64,7 @@ class KrispVivaFilter(BaseAudioFilter):
 
     FRAME_SIZE_MS = 10  # Krisp requires audio frames of 10ms duration for processing.
 
-    def __init__(self, model_path: str = None, noise_suppression_level: int = 100) -> None:
+    def __init__(self, model_path: str = None, noise_suppression_level: int = 10) -> None:
         """Initialize the Krisp noise reduction filter.
 
         Args:
@@ -126,8 +126,6 @@ class KrispVivaFilter(BaseAudioFilter):
 
         nc_cfg = krisp_audio.NcSessionConfig()
         nc_cfg.inputSampleRate = self._int_to_sample_rate(sample_rate)
-        logger.info(f"KrispVivaFilter: Initializing with sample rate: {sample_rate} Hz")
-
         nc_cfg.inputFrameDuration = krisp_audio.FrameDuration.Fd10ms
         nc_cfg.outputSampleRate = nc_cfg.inputSampleRate
         nc_cfg.modelInfo = model_info
@@ -159,9 +157,6 @@ class KrispVivaFilter(BaseAudioFilter):
         """
         if not self._filtering:
             return audio
-        logger.info("KrispVivaFilter: Filtering audio frame")
-        logger.info(f"Audio length: {len(audio)} bytes")
-
         
         # Add incoming audio to our buffer
         self._audio_buffer.extend(audio)
@@ -195,35 +190,4 @@ class KrispVivaFilter(BaseAudioFilter):
                 cleaned_frame
             )
         
-       
-        rms_before = np.sqrt(np.mean(samples.astype(np.float32) ** 2))
-        rms_after = np.sqrt(np.mean(processed_samples.astype(np.float32) ** 2))
-        
-        # Define a threshold for silence (adjust as needed)
-        SILENCE_THRESHOLD = 100  # For 16-bit audio, typical silence is < 100-500
-        
-        # Only save if either before or after has meaningful audio
-        if rms_before > SILENCE_THRESHOLD or rms_after > SILENCE_THRESHOLD:
-            import time 
-            import wave
-            filename = time.time()
-            before_filepath = "/home/user/voice/agents/example/tmp/"+ str(filename) +"_before.wav"
-            after_filepath = "/home/user/voice/agents/example/tmp/"+ str(filename) +"_after.wav"
-            
-            with wave.open(before_filepath, 'wb') as wav_file:
-                wav_file.setnchannels(1)      # Mono channel
-                wav_file.setsampwidth(2)      # 2 bytes per sample (16-bit PCM)
-                wav_file.setframerate(16000)  # Sample rate
-                wav_file.writeframes(audio_to_process)
-                logger.info(f"Saved before filtering audio to {before_filepath} (RMS: {rms_before:.2f})")
-            
-            with wave.open(after_filepath, 'wb') as wav_file:
-                wav_file.setnchannels(1)      # Mono channel
-                wav_file.setsampwidth(2)      # 2 bytes per sample (16-bit PCM)
-                wav_file.setframerate(16000)  # Sample rate
-                wav_file.writeframes(processed_samples.tobytes())
-                logger.info(f"Saved after filtering audio to {after_filepath} (RMS: {rms_after:.2f})")
-        else:
-            logger.debug(f"Skipped saving silent audio (RMS before: {rms_before:.2f}, after: {rms_after:.2f})")
-        # ======================================================
         return processed_samples.tobytes()
