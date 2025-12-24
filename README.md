@@ -1,5 +1,9 @@
 # PIOPIY AI
-Build Telephonic-Grade Voice AI — WebRTC-Ready Framework
+[![PyPI](https://img.shields.io/pypi/v/piopiy-ai)](https://pypi.org/project/piopiy-ai/)
+[![Python](https://img.shields.io/pypi/pyversions/piopiy-ai)](https://pypi.org/project/piopiy-ai/)
+[![License](https://img.shields.io/pypi/l/piopiy-ai)](https://github.com/telecmi/agents/blob/main/LICENSE)
+
+**Telephonic-Grade Voice AI — WebRTC-Ready Framework**
 
 Piopiy AI is an open-source, telephony-grade framework for building real-time voice agents that blend large language models (LLM), automatic speech recognition (ASR), and text-to-speech (TTS) engines. Purchase numbers, configure agents, and let Piopiy handle call routing, audio streaming, and connectivity while you focus on conversation design. Combine cloud or open-source providers to tailor the voice stack to your latency, privacy, and cost targets.
 
@@ -59,52 +63,21 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Providers
+## Advanced Usage & Dynamic Switching
 
-| Provider | Categories |
-|---------|------------|
-| [Anthropic](docs/llm/anthropic.md) | LLM |
-| [AssemblyAI](docs/stt/assemblyai.md) | STT |
-| [AsyncAI](docs/tts/asyncai.md) | TTS |
-| [AWS](docs/llm/aws.md) | LLM, STT, TTS |
-| [Azure](docs/llm/azure.md) | LLM, STT, TTS |
-| [Cartesia](docs/stt/cartesia.md) | STT, TTS |
-| [Cerebras](docs/llm/cerebras.md) | LLM |
-| [Deepgram](docs/stt/deepgram.md) | STT, TTS |
-| [DeepSeek](docs/llm/deepseek.md) | LLM |
-| [ElevenLabs](docs/tts/elevenlabs.md) | TTS |
-| [Fal](docs/stt/fal.md) | STT |
-| [Fireworks](docs/llm/fireworks.md) | LLM |
-| [Fish](docs/tts/fish.md) | TTS |
-| [Gladia](docs/stt/gladia.md) | STT |
-| [Google](docs/llm/google.md) | LLM, STT, TTS |
-| [Grok](docs/llm/grok.md) | LLM |
-| [Groq](docs/llm/groq.md) | LLM, STT, TTS |
-| [Inworld](docs/tts/inworld.md) | TTS |
-| [LMNT](docs/tts/lmnt.md) | TTS |
-| [Mistral](docs/llm/mistral.md) | LLM |
-| [Minimax](docs/tts/minimax.md) | TTS |
-| [Neuphonic](docs/tts/neuphonic.md) | TTS |
-| [NIM](docs/llm/nim.md) | LLM |
-| [Ollama](docs/llm/ollama.md) | LLM |
-| [OpenAI](docs/llm/openai.md) | LLM, STT, TTS |
-| [OpenPipe](docs/llm/openpipe.md) | LLM |
-| [OpenRouter](docs/llm/openrouter.md) | LLM |
-| [Perplexity](docs/llm/perplexity.md) | LLM |
-| [Piper](docs/tts/piper.md) | TTS |
-| [PlayHT](docs/tts/playht.md) | TTS |
-| [Qwen](docs/llm/qwen.md) | LLM |
-| [Rime](docs/tts/rime.md) | TTS |
-| [Riva](docs/stt/riva.md) | STT, TTS |
-| [SambaNova](docs/llm/sambanova.md) | LLM, STT |
-| [Sarvam](docs/tts/sarvam.md) | TTS |
-| [Soniox](docs/stt/soniox.md) | STT |
-| [Speechmatics](docs/stt/speechmatics.md) | STT |
-| [TeleCMI](docs/transport/telecmi.md) | Transport |
-| [Together](docs/llm/together.md) | LLM |
-| [Ultravox](docs/stt/ultravox.md) | STT |
-| [Whisper](docs/stt/whisper.md) | STT |
-| [XTTS](docs/tts/xtts.md) | TTS |
+Piopiy AI supports advanced features like switching providers mid-call (e.g., swapping TTS voices or STT models based on user commands).
+
+Check out the [Switching Providers Examples](example/switch_providers/README.md) to see how to implement dynamic provider switching with `ServiceSwitcher`.
+
+## Supported Providers
+
+Piopiy AI supports 40+ providers. Here are some of the most popular ones:
+
+- **LLM**: OpenAI, Anthropic, Google Gemini, Groq, unsloth (via Ollama)
+- **STT**: Deepgram, Speechmatics, Google, Azure, AssemblyAI, Whisper
+- **TTS**: ElevenLabs, Cartesia, PlayHT, Azure, Google, Rime
+
+👉 **[See the full list of Supported Providers](docs/PROVIDERS.md)**
 
 ### Interruption & Silero VAD
 
