@@ -20,6 +20,7 @@ async def create_session(call_id: str, agent_id: str, from_number: str, to_numbe
     from_number = from_number
     to_number = to_number
 
+   
     voice_agent = VoiceAgent(
         instructions="You are an advanced voice AI.",
         greeting="Hello! How can I help you today?",

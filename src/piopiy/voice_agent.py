@@ -8,7 +8,7 @@ from piopiy.adapters.schemas.function_schema import FunctionSchema
 from piopiy.adapters.schemas.tools_schema import ToolsSchema
 from piopiy.audio.vad.silero import SileroVADAnalyzer
 from piopiy.audio.vad.vad_analyzer import VADParams
-from piopiy.frames.frames import TTSSpeakFrame, BotSpeakingFrame, LLMFullResponseEndFrame
+from piopiy.frames.frames import TTSSpeakFrame, BotSpeakingFrame, LLMFullResponseEndFrame, ManuallySwitchServiceFrame
 from piopiy.pipeline.pipeline import Pipeline
 from piopiy.pipeline.runner import PipelineRunner
 from piopiy.pipeline.task import PipelineParams, PipelineTask
@@ -17,6 +17,7 @@ from piopiy.audio.interruptions.base_interruption_strategy import BaseInterrupti
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.transports.base_transport import BaseTransport
 from piopiy.transports.services.telecmi import TelecmiParams, TelecmiTransport
+from piopiy.pipeline.service_switcher import ServiceSwitcher
 
 try:
     from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
@@ -101,6 +102,8 @@ class VoiceAgent:
         self._stt: Optional[FrameProcessor] = None
         self._llm: Optional[FrameProcessor] = None
         self._tts: Optional[FrameProcessor] = None
+        self._tts_switcher: Optional[ServiceSwitcher] = None
+        self._stt_switcher: Optional[ServiceSwitcher] = None
         self._vad: Optional[SileroVADAnalyzer] = None  # analyzer object we’ll inject
 
         self._enable_metrics = False
@@ -122,13 +125,23 @@ class VoiceAgent:
     def register_tool(self, name: str, handler: Callable[..., Awaitable[Any]]) -> None:
         self._tool_handlers[name] = handler
 
+    async def switch_service(self, service: FrameProcessor) -> None:
+        """Switch the current service to the provided processor.
+        
+        This is typically used to switch TTS or STT providers dynamically.
+        """
+        if self._task:
+            await self._task.queue_frame(ManuallySwitchServiceFrame(service=service))
+
     # ---- Configuration ----
     async def Action(
         self,
         *,
-        stt: FrameProcessor,
+        stt: Optional[FrameProcessor] = None,
         llm: FrameProcessor,
-        tts: FrameProcessor,
+        tts: Optional[FrameProcessor] = None,
+        tts_switcher: Optional[ServiceSwitcher] = None,
+        stt_switcher: Optional[ServiceSwitcher] = None,
         mcp_tools: Optional[Any] = None,
         # NEW: flexible VAD arg. Accepts:
         #   - True  -> enable with library defaults
@@ -146,6 +159,8 @@ class VoiceAgent:
         self._stt = stt
         self._llm = llm
         self._tts = tts
+        self._tts_switcher = tts_switcher
+        self._stt_switcher = stt_switcher
         self._enable_metrics = enable_metrics
         self._enable_usage_metrics = enable_usage_metrics
         self._allow_interruptions = allow_interruptions
@@ -186,10 +201,21 @@ class VoiceAgent:
 
     # ---- Pipeline build & run ----
     async def _build_task(self) -> None:
-        if not (self._transport and self._stt and self._llm and self._tts):
-            raise RuntimeError("Call AgentAction(...) before start(). Missing components.")
+        if not self._transport:
+         raise RuntimeError("Missing transport. Call Action(...).")
+    
+        if not self._llm:
+         raise RuntimeError("Missing llm. Call Action(...).")
 
-        self._processors = [self._transport.input(), self._stt]
+        if not (self._stt or self._stt_switcher):
+           raise RuntimeError("Missing STT (provide stt or stt_switcher).")
+        
+        if not (self._tts or self._tts_switcher):
+           raise RuntimeError("Missing TTS (provide tts or tts_switcher).")
+
+        self._stt_proc = self._stt_switcher or self._stt
+        self._tts_proc = self._tts_switcher or self._tts
+        self._processors = [self._transport.input(), self._stt_proc]
 
         tool_schemas: List[FunctionSchema] = list(self._tool_schemas.values())
         if self._tools:
@@ -225,7 +251,7 @@ class VoiceAgent:
         else:
             raise RuntimeError("LLMService missing register_function/register_tool")
 
-        self._processors.extend([self._llm, self._tts, self._transport.output()])
+        self._processors.extend([self._llm, self._tts_proc, self._transport.output()])
         if self.context_aggregator:
             self._processors.append(self.context_aggregator.assistant())
 

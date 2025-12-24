@@ -6,7 +6,8 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
-from loguru import logger
+import logging
+
 from pydantic import BaseModel
 from piopiy.agent import URL_CTX, TOKEN_CTX, ROOM_CTX
 from piopiy.audio.utils import create_stream_resampler
@@ -27,12 +28,15 @@ from piopiy.transports.base_output import BaseOutputTransport
 from piopiy.transports.base_transport import BaseTransport, TransportParams
 from piopiy.utils.asyncio.task_manager import BaseTaskManager
 
+# Initialize logger for this module
+logger = logging.getLogger(__name__)
+
 try:
     from livekit import rtc
     from tenacity import retry, stop_after_attempt, wait_exponential
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use TeleCMI, you need to `pip install pipecat-ai[telecmi]`.")
+    logger.error("In order to use TeleCMI, you need to `pip install piopiy-telecmi`.")
     raise Exception(f"Missing module: {e}")
 
 
