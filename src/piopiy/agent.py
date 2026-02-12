@@ -9,6 +9,8 @@ import signal
 from typing import Awaitable, Callable, Dict, Optional
 from contextvars import ContextVar
 import socketio
+import json
+import sys
 
 URL_CTX: ContextVar[str] = ContextVar("telecmi_url")
 TOKEN_CTX: ContextVar[str] = ContextVar("telecmi_token")
@@ -31,6 +33,7 @@ class Agent:
         agent_token: str,
         create_session: Callable[..., Awaitable[None]],
         signaling_url: Optional[str] = None,
+        debug: bool = False,
     ):
         """
         create_session(url, token, room_name) -> coroutine
@@ -39,11 +42,28 @@ class Agent:
         self.agent_id = agent_id
         self.agent_token = agent_token
         self.create_session = create_session
+        self.debug = debug
 
+        log_level = "INFO" if self.debug else "ERROR"
+        
+        # Configure logging
         logging.basicConfig(
-            level=logging.INFO,
+            level=getattr(logging, log_level),
             format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         )
+        
+        # Configure loguru
+        try:
+            from loguru import logger as loguru_logger
+            loguru_logger.remove()
+            loguru_logger.add(sys.stderr, level=log_level)
+        except ImportError:
+            pass
+
+        if not self.debug:
+            logging.getLogger("deepgram").setLevel(logging.CRITICAL)
+            logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+            logging.getLogger("websockets").setLevel(logging.CRITICAL)
 
         self.sio = socketio.AsyncClient(logger=False, engineio_logger=False)
         self.active_sessions: Dict[str, asyncio.Task] = {}
@@ -89,6 +109,30 @@ class Agent:
                         kwargs["from_number"] = invite.get("from_number")
                     if "to_number" in sig.parameters:
                         kwargs["to_number"] = invite.get("to_number")
+                    if "metadata" in sig.parameters:
+                        raw_meta = invite.get("metadata")
+                        parsed_meta = None
+                        if raw_meta:
+                            try:
+                                if isinstance(raw_meta, str):
+                                    # Handle potential escaped characters like \}
+                                    if r"\}" in raw_meta:
+                                        raw_meta = raw_meta.replace(r"\}", "}")
+                                    parsed_meta = json.loads(raw_meta)
+                                    # If it was double-encoded, try parsing again
+                                    if isinstance(parsed_meta, str):
+                                         try:
+                                             parsed_meta = json.loads(parsed_meta)
+                                         except:
+                                             pass
+                                else:
+                                    parsed_meta = raw_meta
+                            except (TypeError, json.JSONDecodeError):
+                                parsed_meta = raw_meta
+                        kwargs["metadata"] = parsed_meta
+
+                    if self.debug:
+                        print(f"DEBUG: join_room invite payload: {invite}")
 
                     await self.create_session(**kwargs)
                 finally:

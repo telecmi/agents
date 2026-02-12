@@ -13,12 +13,30 @@ import dotenv
 
 dotenv.load_dotenv()
 
-async def create_session(call_id: str, agent_id: str, from_number: str, to_number: str):
+async def create_session(call_id: str, agent_id: str, from_number: str, to_number: str, metadata: str = None):
+    # This function is what create_session expects
+    
+    print(f"\n{'='*50}")
+    print("INSIDE create_session")
+    print(f"{'='*50}")
+    print(f"Call ID: {call_id}")
+    print(f"To: {to_number}")
+    print(f"From: {from_number}")
 
-    call_id = call_id
-    agent_id = agent_id
-    from_number = from_number
-    to_number = to_number
+    if metadata:
+        print("\nMETADATA:")
+        print(f"{'-'*30}")
+        if isinstance(metadata, dict):
+            # Simple table format
+            print(f"{'Key':<20} | {'Value':<20}")
+            print(f"{'-'*20}-+-{'-'*20}")
+            for k, v in metadata.items():
+                print(f"{k:<20} | {v}")
+        else:
+            print(f"Raw Value: {metadata}")
+    else:
+        print("\nNo metadata received.")
+    print(f"{'='*50}\n")
 
    
     voice_agent = VoiceAgent(
@@ -40,6 +58,7 @@ async def main():
         agent_id=os.getenv("AGENT_ID"),
         agent_token=os.getenv("AGENT_TOKEN"),
         create_session=create_session,
+        debug=os.getenv("AGENT_DEBUG", "false").lower() == "true",
     )
     await agent.connect()
 

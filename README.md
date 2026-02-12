@@ -36,7 +36,11 @@ from piopiy.services.openai.llm import OpenAILLMService
 from piopiy.services.cartesia.tts import CartesiaTTSService
 
 
-async def create_session():
+async def create_session(agent_id, call_id, from_number, to_number, metadata=None):
+    print(f"Incoming call {call_id} from {from_number} to {to_number}")
+    if metadata:
+        print(f"Call Metadata: {metadata}")
+
     voice_agent = VoiceAgent(
         instructions="You are an advanced voice AI.",
         greeting="Hello! How can I help you today?",
@@ -55,6 +59,7 @@ async def main():
         agent_id=os.getenv("AGENT_ID"),
         agent_token=os.getenv("AGENT_TOKEN"),
         create_session=create_session,
+        debug=True # Enable debug logging (optional, default: False)
     )
     await agent.connect()
 
@@ -62,6 +67,47 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+## Configuration & Debugging
+
+### Debug Mode
+
+You can control the verbosity of the logs using the `debug` parameter in the `Agent` constructor.
+
+-   **`debug=True`**: Enables INFO level logging and prints full debug information, including internal events and third-party provider logs (e.g., Deepgram, Websockets). Useful during development.
+-   **`debug=False`** (Default): Sets logging to ERROR level and suppresses noisy third-party logs. This keeps your console clean and focuses on your application's output (like metadata).
+
+### Handling Metadata
+
+The `create_session` function receives `metadata` as a dictionary if it was passed when initiating the call.
+
+-   **Automatic Parsing**: Piopiy automatically parses JSON metadata strings into Python dictionaries.
+-   **Key-Value Access**: You can access properties directly, e.g., `metadata.get('customer_name')`.
+
+```python
+async def create_session(agent_id, call_id, metadata=None, **kwargs):
+    if metadata:
+        customer_id = metadata.get("customer_id")
+        print(f"Handling call for customer: {customer_id}")
+```
+
+## 📚 Documentation
+
+### Quick Links
+
+- **[Getting Started](docs/GETTING_STARTED.md)** - Installation, setup, and your first voice agent
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Core concepts, building agents, and advanced features
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
+- **[Telephony Setup](docs/TELEPHONY.md)** - Phone numbers, deployment, and production best practices
+- **[Supported Providers](docs/PROVIDERS.md)** - 40+ LLM, STT, and TTS providers
+- **[Examples](example/README.md)** - Code examples and use cases
+
+### Learning Path
+
+1. **New to Piopiy?** Start with [Getting Started](docs/GETTING_STARTED.md)
+2. **Building your agent?** Read the [Developer Guide](docs/DEVELOPER_GUIDE.md)
+3. **Need API details?** Check the [API Reference](docs/API_REFERENCE.md)
+4. **Deploying to production?** Follow [Telephony Setup](docs/TELEPHONY.md)
 
 ## Advanced Usage & Dynamic Switching
 
