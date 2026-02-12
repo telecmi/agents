@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -253,8 +253,9 @@ class Mem0MemoryService(FrameProcessor):
                     # Otherwise, pass the enhanced context frame downstream
                     await self.push_frame(frame)
             except Exception as e:
-                logger.error(f"Error processing with Mem0: {str(e)}")
-                await self.push_frame(ErrorFrame(f"Error processing with Mem0: {str(e)}"))
+                await self.push_error(
+                    error_msg=f"Error processing with Mem0: {str(e)}", exception=e
+                )
                 await self.push_frame(frame)  # Still pass the original frame through
         else:
             # For non-context frames, just pass them through

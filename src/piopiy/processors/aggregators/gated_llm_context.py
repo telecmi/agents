@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -9,7 +9,7 @@
 from piopiy.frames.frames import CancelFrame, EndFrame, Frame, LLMContextFrame, StartFrame
 from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContextFrame
 from piopiy.processors.frame_processor import FrameDirection, FrameProcessor
-from piopiy.sync.base_notifier import BaseNotifier
+from piopiy.utils.sync.base_notifier import BaseNotifier
 
 
 class GatedLLMContextAggregator(FrameProcessor):

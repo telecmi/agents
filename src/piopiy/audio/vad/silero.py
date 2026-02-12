@@ -1,10 +1,10 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
 
-"""Silero Voice Activity Detection (VAD) implementation for Piopiy.
+"""Silero Voice Activity Detection (VAD) implementation for Pipecat.
 
 This module provides a VAD analyzer based on the Silero VAD ONNX model,
 which can detect voice activity in audio streams with high accuracy.
@@ -27,7 +27,7 @@ try:
 
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Silero VAD, you need to `pip install piopiy-ai[silero]`.")
+    logger.error("In order to use Silero VAD, you need to `pip install pipecat-ai[silero]`.")
     raise Exception(f"Missing module(s): {e}")
 
 
@@ -147,7 +147,7 @@ class SileroVADAnalyzer(VADAnalyzer):
         logger.debug("Loading Silero VAD model...")
 
         model_name = "silero_vad.onnx"
-        package_path = "piopiy.audio.vad.data"
+        package_path = "pipecat.audio.vad.data"
 
         try:
             import importlib_resources as impresources

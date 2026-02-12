@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -92,12 +92,43 @@ def _add_token_usage_to_span(span, token_usage):
             span.set_attribute("gen_ai.usage.input_tokens", token_usage["prompt_tokens"])
         if "completion_tokens" in token_usage:
             span.set_attribute("gen_ai.usage.output_tokens", token_usage["completion_tokens"])
+        # Add cached token metrics for dictionary
+        if (
+            "cache_read_input_tokens" in token_usage
+            and token_usage["cache_read_input_tokens"] is not None
+        ):
+            span.set_attribute(
+                "gen_ai.usage.cache_read_input_tokens", token_usage["cache_read_input_tokens"]
+            )
+        if (
+            "cache_creation_input_tokens" in token_usage
+            and token_usage["cache_creation_input_tokens"] is not None
+        ):
+            span.set_attribute(
+                "gen_ai.usage.cache_creation_input_tokens",
+                token_usage["cache_creation_input_tokens"],
+            )
+        if "reasoning_tokens" in token_usage and token_usage["reasoning_tokens"] is not None:
+            span.set_attribute("gen_ai.usage.reasoning_tokens", token_usage["reasoning_tokens"])
     else:
         # Handle LLMTokenUsage object
         span.set_attribute("gen_ai.usage.input_tokens", getattr(token_usage, "prompt_tokens", 0))
         span.set_attribute(
             "gen_ai.usage.output_tokens", getattr(token_usage, "completion_tokens", 0)
         )
+
+        # Add cached token metrics for LLMTokenUsage object
+        cache_read_tokens = getattr(token_usage, "cache_read_input_tokens", None)
+        if cache_read_tokens is not None:
+            span.set_attribute("gen_ai.usage.cache_read_input_tokens", cache_read_tokens)
+
+        cache_creation_tokens = getattr(token_usage, "cache_creation_input_tokens", None)
+        if cache_creation_tokens is not None:
+            span.set_attribute("gen_ai.usage.cache_creation_input_tokens", cache_creation_tokens)
+
+        reasoning_tokens = getattr(token_usage, "reasoning_tokens", None)
+        if reasoning_tokens is not None:
+            span.set_attribute("gen_ai.usage.reasoning_tokens", reasoning_tokens)
 
 
 def traced_tts(func: Optional[Callable] = None, *, name: Optional[str] = None) -> Callable:
@@ -155,7 +186,7 @@ def traced_tts(func: Optional[Callable] = None, *, name: Optional[str] = None) -
                     add_tts_span_attributes(
                         span=span,
                         service_name=service_class_name,
-                        model=getattr(self, "model_name", "unknown"),
+                        model=getattr(self, "model_name") or "unknown",
                         voice_id=getattr(self, "_voice_id", "unknown"),
                         text=text,
                         settings=getattr(self, "_settings", {}),
@@ -272,7 +303,7 @@ def traced_stt(func: Optional[Callable] = None, *, name: Optional[str] = None) -
                         add_stt_span_attributes(
                             span=current_span,
                             service_name=service_class_name,
-                            model=getattr(self, "model_name", settings.get("model", "unknown")),
+                            model=getattr(self, "model_name") or settings.get("model", "unknown"),
                             transcript=transcript,
                             is_final=is_final,
                             language=str(language) if language else None,
@@ -452,7 +483,10 @@ def traced_llm(func: Optional[Callable] = None, *, name: Optional[str] = None) -
                             # Add all available attributes to the span
                             attribute_kwargs = {
                                 "service_name": service_class_name,
-                                "model": getattr(self, "model_name", "unknown"),
+                                "model": getattr(self, "_full_model_name", None)
+                                or getattr(self, "model_name", None)
+                                or params.get("model")
+                                or "unknown",
                                 "stream": True,  # Most LLM services use streaming
                                 "parameters": params,
                             }
@@ -551,8 +585,10 @@ def traced_gemini_live(operation: str) -> Callable:
                 ) as current_span:
                     try:
                         # Base service attributes
-                        model_name = getattr(
-                            self, "model_name", getattr(self, "_model_name", "unknown")
+                        model_name = (
+                            getattr(self, "model_name", None)
+                            or getattr(self, "_model_name", None)
+                            or "unknown"
                         )
                         voice_id = getattr(self, "_voice_id", None)
                         language_code = getattr(self, "_language_code", None)
@@ -715,7 +751,7 @@ def traced_gemini_live(operation: str) -> Callable:
                                             else:
                                                 operation_attrs["tool.result_status"] = "completed"
 
-                                    except json.JSONDecodeError as e:
+                                    except json.JSONDecodeError:
                                         operation_attrs["tool.result"] = (
                                             f"Invalid JSON: {str(result_content)[:500]}"
                                         )
@@ -856,8 +892,10 @@ def traced_openai_realtime(operation: str) -> Callable:
                 ) as current_span:
                     try:
                         # Base service attributes
-                        model_name = getattr(
-                            self, "model_name", getattr(self, "_model_name", "unknown")
+                        model_name = (
+                            getattr(self, "model_name", None)
+                            or getattr(self, "_model_name", None)
+                            or "unknown"
                         )
 
                         # Operation-specific attribute collection

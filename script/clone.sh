@@ -8,7 +8,7 @@ set -euo pipefail
 
 ### --- CONFIG (override via env) ---
 REPO_URL="${REPO_URL:-https://github.com/pipecat-ai/pipecat.git}"
-REPO_REF="${REPO_REF:-v0.0.95}"                  # tag/branch/SHA, or 'main' for latest
+REPO_REF="${REPO_REF:-v0.0.99}"                  # tag/branch/SHA, or 'main' for latest
 TARGET_PROJECT_DIR="${TARGET_PROJECT_DIR:-$PWD}" # your project root
 SRC_SUBPATH="${SRC_SUBPATH:-src/pipecat}"
 DEST_SUBPATH="${DEST_SUBPATH:-src/piopiy}"

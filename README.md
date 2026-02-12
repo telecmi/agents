@@ -91,6 +91,69 @@ async def create_session(agent_id, call_id, metadata=None, **kwargs):
         print(f"Handling call for customer: {customer_id}")
 ```
 
+## 🎯 Supported Providers
+
+Piopiy AI supports **40+ provider integrations** across STT, LLM, and TTS services:
+
+### Speech-to-Text (STT) - 8 Providers
+
+| Provider | Speed | Accuracy | Best For |
+|----------|-------|----------|----------|
+| **Deepgram** | ⚡⚡⚡ | ⭐⭐⭐ | Real-time, low latency |
+| **AssemblyAI** | ⚡⚡ | ⭐⭐⭐ | High accuracy |
+| **Azure Speech** | ⚡⚡ | ⭐⭐ | Enterprise, budget |
+| **Google Cloud** | ⚡⚡ | ⭐⭐⭐ | Multi-language |
+| **Gladia** | ⚡⚡ | ⭐⭐ | Real-time |
+| **Speechmatics** | ⚡⚡ | ⭐⭐⭐ | Enterprise |
+| **OpenAI Whisper** | ⚡ | ⭐⭐⭐ | High accuracy |
+| **Local Whisper** | ⚡ | ⭐⭐⭐ | Privacy, offline |
+
+### Large Language Models (LLM) - 13 Providers
+
+| Provider | Speed | Quality | Best For |
+|----------|-------|---------|----------|
+| **Groq** | ⚡⚡⚡ | ⭐⭐ | Ultra-fast responses |
+| **Cerebras** | ⚡⚡⚡ | ⭐⭐ | Ultra-fast inference |
+| **OpenAI** | ⚡⚡ | ⭐⭐⭐ | Best overall quality |
+| **Anthropic Claude** | ⚡⚡ | ⭐⭐⭐ | Complex reasoning |
+| **Google Gemini** | ⚡⚡ | ⭐⭐⭐ | Multimodal |
+| **Mistral** | ⚡⚡ | ⭐⭐⭐ | European AI |
+| **DeepSeek** | ⚡⚡ | ⭐⭐ | Cost-effective |
+| **Perplexity** | ⚡⚡ | ⭐⭐⭐ | Search-augmented |
+| **Together AI** | ⚡⚡ | ⭐⭐ | Open-source models |
+| **Fireworks** | ⚡⚡⚡ | ⭐⭐ | Fast inference |
+| **OpenRouter** | ⚡⚡ | ⭐⭐⭐ | Multi-provider access |
+| **Ollama** | ⚡ | ⭐⭐ | Local/offline |
+
+### Text-to-Speech (TTS) - 17 Providers
+
+| Provider | Speed | Quality | Best For |
+|----------|-------|---------|----------|
+| **Cartesia** | ⚡⚡⚡ | ⭐⭐⭐ | Ultra-low latency |
+| **ElevenLabs** | ⚡⚡ | ⭐⭐⭐ | Highest quality |
+| **PlayHT** | ⚡⚡ | ⭐⭐⭐ | Voice cloning |
+| **LMNT** | ⚡⚡⚡ | ⭐⭐⭐ | Low latency |
+| **Deepgram Aura** | ⚡⚡⚡ | ⭐⭐ | Fast, budget-friendly |
+| **Azure** | ⚡⚡ | ⭐⭐ | Enterprise |
+| **Google** | ⚡⚡ | ⭐⭐ | Multi-language |
+| **OpenAI** | ⚡⚡ | ⭐⭐⭐ | Good quality |
+| **Hume AI** | ⚡⚡ | ⭐⭐⭐ | Empathic voice |
+| **Murf.ai** | ⚡⚡ | ⭐⭐⭐ | Professional voices |
+
+**See [example/providers/](example/providers/) for complete examples of all providers.**
+
+### 🚀 Optimized Stacks
+
+**Ultra-Low Latency** (< 500ms response time):
+```bash
+Deepgram (STT) + Groq (LLM) + Cartesia (TTS)
+```
+
+**Premium Quality** (Best accuracy & naturalness):
+```bash
+AssemblyAI (STT) + Claude 3.5 Sonnet (LLM) + ElevenLabs (TTS)
+```
+
 ## 📚 Documentation
 
 ### Quick Links

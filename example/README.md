@@ -36,8 +36,9 @@ Set additional keys depending on the stack you run (for example `OPENAI_API_KEY`
 
 | Example | LLM | ASR | TTS / Speech | Highlights |
 |---------|-----|-----|--------------|------------|
-| `basic.py` | OpenAI | Deepgram | Cartesia | Minimal voice loop showcasing `VoiceAgent.Action` with Silero VAD.
-| `mcp_sales.py` | OpenAI | Deepgram | Cartesia | Adds MCP tools for function calling and knowledge retrieval.
+| `basic/basic.py` | OpenAI | Deepgram | Cartesia | Minimal voice loop showcasing `VoiceAgent.Action` with Silero VAD.
+| `murf/murf_tts.py` | OpenAI | Deepgram | Murf.ai | High-quality natural voices with extensive customization (requires `pipecat-murf-tts`).
+| `mcp_sales/mcp_sales.py` | OpenAI | Deepgram | Cartesia | Adds MCP tools for function calling and knowledge retrieval.
 | `function_calling/weather.py` | OpenAI | Deepgram | Cartesia | Weather tool-calling workflow.
 | `function_calling/crm.py` | OpenAI | Deepgram | Cartesia | CRM sales assistant with structured tool outputs.
 | `chatterbox/chatterbox_ws.py` | Ollama (open-source) | Whisper (open-source) | Chatterbox (open-source) | Streams speech from a fully open-source stack running locally.
@@ -50,9 +51,9 @@ Set additional keys depending on the stack you run (for example `OPENAI_API_KEY`
 Activate your virtual environment, export the required environment variables, then run a script:
 
 ```bash
-python basic.py
+python example/basic/basic.py
 # or
-python function_calling/weather.py
+python example/function_calling/weather.py
 ```
 
 Refer to each script for provider-specific configuration such as local server URLs or extra dependencies. Thanks to Pipecat for making the SDK integration straightforward.

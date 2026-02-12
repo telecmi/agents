@@ -18,6 +18,7 @@ from piopiy.frames.frames import (
     StartFrame,
     TranscriptionFrame,
 )
+from piopiy.services.sarvam._sdk import sdk_headers
 from piopiy.services.stt_service import STTService
 from piopiy.transcriptions.language import Language, resolve_language
 from piopiy.utils.time import time_now_iso8601
@@ -125,7 +126,7 @@ class SarvamSTTService(STTService):
 
         self.set_model_name(model)
         self._api_key = api_key
-        self._language_code = params.language
+        self._language_code: Optional[Language] = params.language
         # For saarika models, default to "unknown" if language is not provided
         if params.language:
             self._language_string = language_to_sarvam_language(params.language)
@@ -141,7 +142,16 @@ class SarvamSTTService(STTService):
         self._input_audio_codec = input_audio_codec
 
         # Initialize Sarvam SDK client
+        self._sdk_headers = sdk_headers()
+        # NOTE: We avoid passing non-standard kwargs here because different sarvamai
+        # versions expose different constructor signatures (static type checkers
+        # complain otherwise). We instead inject headers best-effort below.
         self._sarvam_client = AsyncSarvamAI(api_subscription_key=api_key)
+        for attr in ("default_headers", "_default_headers", "headers", "_headers"):
+            d = getattr(self._sarvam_client, attr, None)
+            if isinstance(d, dict):
+                d.update(self._sdk_headers)
+                break
         self._websocket_context = None
         self._socket_client = None
         self._receive_task = None
@@ -275,8 +285,7 @@ class SarvamSTTService(STTService):
                 await self._socket_client.translate(**method_kwargs)
 
         except Exception as e:
-            logger.error(f"Error sending audio to Sarvam: {e}")
-            await self.push_error(ErrorFrame(f"Failed to send audio: {e}"))
+            yield ErrorFrame(error=f"Error sending audio to Sarvam: {e}", exception=e)
 
         yield None
 
@@ -298,17 +307,28 @@ class SarvamSTTService(STTService):
                 "sample_rate": str(self.sample_rate),
             }
 
+            def _connect_with_sdk_headers(connect_fn, **kwargs):
+                # Different SDK versions may use different kwarg names.
+                for header_kw in ("headers", "additional_headers", "extra_headers"):
+                    try:
+                        return connect_fn(**kwargs, **{header_kw: self._sdk_headers})
+                    except TypeError:
+                        pass
+                return connect_fn(**kwargs)
+
             # Choose the appropriate service based on model
             if "saarika" in self.model_name.lower():
                 # STT service - requires language_code
                 connect_kwargs["language_code"] = self._language_string
-                self._websocket_context = self._sarvam_client.speech_to_text_streaming.connect(
-                    **connect_kwargs
+                self._websocket_context = _connect_with_sdk_headers(
+                    self._sarvam_client.speech_to_text_streaming.connect,
+                    **connect_kwargs,
                 )
             else:
                 # STT-Translate service - auto-detects input language and returns translated text
-                self._websocket_context = (
-                    self._sarvam_client.speech_to_text_translate_streaming.connect(**connect_kwargs)
+                self._websocket_context = _connect_with_sdk_headers(
+                    self._sarvam_client.speech_to_text_translate_streaming.connect,
+                    **connect_kwargs,
                 )
 
             # Enter the async context manager
@@ -332,13 +352,11 @@ class SarvamSTTService(STTService):
             logger.info("Connected to Sarvam successfully")
 
         except ApiError as e:
-            logger.error(f"Sarvam API error: {e}")
-            await self.push_error(ErrorFrame(f"Sarvam API error: {e}"))
+            await self.push_error(error_msg=f"Sarvam API error: {e}", exception=e)
         except Exception as e:
-            logger.error(f"Failed to connect to Sarvam: {e}")
             self._socket_client = None
             self._websocket_context = None
-            await self.push_error(ErrorFrame(f"Failed to connect to Sarvam: {e}"))
+            await self.push_error(error_msg=f"Failed to connect to Sarvam: {e}", exception=e)
 
     async def _disconnect(self):
         """Disconnect from Sarvam WebSocket API using SDK."""
@@ -351,7 +369,9 @@ class SarvamSTTService(STTService):
                 # Exit the async context manager
                 await self._websocket_context.__aexit__(None, None, None)
             except Exception as e:
-                logger.error(f"Error closing WebSocket connection: {e}")
+                await self.push_error(
+                    error_msg=f"Error closing WebSocket connection: {e}", exception=e
+                )
             finally:
                 logger.debug("Disconnected from Sarvam WebSocket")
                 self._socket_client = None
@@ -371,8 +391,7 @@ class SarvamSTTService(STTService):
             # Messages will be handled via the _message_handler callback
             await self._socket_client.start_listening()
         except Exception as e:
-            logger.error(f"Error in Sarvam receive task: {e}")
-            await self.push_error(ErrorFrame(f"Sarvam receive task error: {e}"))
+            await self.push_error(error_msg=f"Sarvam receive task error: {e}", exception=e)
 
     async def _handle_message(self, message):
         """Handle incoming WebSocket message from Sarvam SDK.
@@ -395,6 +414,10 @@ class SarvamSTTService(STTService):
                     await self.start_metrics()
                     logger.debug("User started speaking")
                     await self._call_event_handler("on_speech_started")
+
+                elif signal == "END_SPEECH":
+                    logger.debug("User stopped speaking")
+                    await self._call_event_handler("on_speech_stopped")
 
             elif message.type == "data":
                 await self.stop_ttfb_metrics()
@@ -427,8 +450,7 @@ class SarvamSTTService(STTService):
                 await self.stop_processing_metrics()
 
         except Exception as e:
-            logger.error(f"Error handling Sarvam message: {e}")
-            await self.push_error(ErrorFrame(f"Failed to handle message: {e}"))
+            await self.push_error(error_msg=f"Failed to handle message: {e}", exception=e)
             await self.stop_all_metrics()
 
     @traced_stt

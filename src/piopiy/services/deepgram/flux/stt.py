@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -116,6 +116,7 @@ class DeepgramFluxSTTService(WebsocketSTTService):
         model: str = "flux-general-en",
         flux_encoding: str = "linear16",
         params: Optional[InputParams] = None,
+        should_interrupt: bool = True,
         **kwargs,
     ):
         """Initialize the Deepgram Flux STT service.
@@ -129,6 +130,7 @@ class DeepgramFluxSTTService(WebsocketSTTService):
                 Raw signed little-endian 16-bit PCM encoding.
             params: InputParams instance containing detailed API configuration options.
                 If None, default parameters will be used.
+            should_interrupt: Determine whether the bot should be interrupted when Flux detects that the user is speaking.
             **kwargs: Additional arguments passed to the parent WebsocketSTTService class.
 
         Examples:
@@ -150,12 +152,23 @@ class DeepgramFluxSTTService(WebsocketSTTService):
                     params=params
                 )
         """
-        super().__init__(sample_rate=sample_rate, **kwargs)
+        # Note: For DeepgramFluxSTTService, differently from other processes, we need to create
+        # the _receive_task inside _connect_websocket, because the websocket should only be
+        # considered connected and ready to send audio once we receive from Flux the message
+        # which confirms the connection has been established.
+        # If we try to keep the logic reconnect_on_error, when receiving a message, the
+        # _receive_task_handler would try to reconnect in case of error, invoking the
+        # _connect_websocket again and leading to a case where the first _receive_task_handler
+        # was never destroyed.
+        # So we can keep it here as false, because inside the method send_with_retry, it will
+        # already try to reconnect if needed.
+        super().__init__(sample_rate=sample_rate, reconnect_on_error=False, **kwargs)
 
         self._api_key = api_key
         self._url = url
         self._model = model
         self._params = params or DeepgramFluxSTTService.InputParams()
+        self._should_interrupt = should_interrupt
         self._flux_encoding = flux_encoding
         # This is the currently only supported language
         self._language = Language.EN
@@ -181,6 +194,8 @@ class DeepgramFluxSTTService(WebsocketSTTService):
         Establishes the WebSocket connection to the Deepgram Flux API and starts
         the background task for receiving transcription results.
         """
+        await super()._connect()
+
         await self._connect_websocket()
 
     async def _disconnect(self):
@@ -189,11 +204,12 @@ class DeepgramFluxSTTService(WebsocketSTTService):
         Gracefully disconnects from the Deepgram Flux API, cancels background tasks,
         and cleans up resources to prevent memory leaks.
         """
+        await super()._disconnect()
+
         try:
             await self._disconnect_websocket()
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
-            await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
+            await self.push_error(error_msg=f"Unknown error occurred: {e}", exception=e)
         finally:
             # Reset state only after everything is cleaned up
             self._websocket = None
@@ -235,6 +251,11 @@ class DeepgramFluxSTTService(WebsocketSTTService):
                 additional_headers={"Authorization": f"Token {self._api_key}"},
             )
 
+            headers = {
+                k: v for k, v in self._websocket.response.headers.items() if k.startswith("dg-")
+            }
+            logger.debug(f'{self}: Websocket connection initialized: {{"headers": {headers}}}')
+
             # Creating the receiver task
             if not self._receive_task:
                 self._receive_task = self.create_task(
@@ -251,8 +272,7 @@ class DeepgramFluxSTTService(WebsocketSTTService):
             logger.debug("Connected to Deepgram Flux Websocket")
             await self._call_event_handler("on_connected")
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
-            await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
+            await self.push_error(error_msg=f"Unknown error occurred: {e}", exception=e)
             self._websocket = None
             await self._call_event_handler("on_connection_error", f"{e}")
 
@@ -280,8 +300,7 @@ class DeepgramFluxSTTService(WebsocketSTTService):
                 logger.debug("Disconnecting from Deepgram Flux Websocket")
                 await self._websocket.close()
         except Exception as e:
-            logger.error(f"{self} error closing websocket: {e}")
-            await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
+            await self.push_error(error_msg=f"Error closing websocket: {e}", exception=e)
         finally:
             self._websocket = None
             await self._call_event_handler("on_disconnected")
@@ -291,10 +310,13 @@ class DeepgramFluxSTTService(WebsocketSTTService):
 
         This signals to the server that no more audio data will be sent.
         """
-        if self._websocket:
-            logger.debug("Sending CloseStream message to Deepgram Flux")
-            message = {"type": "CloseStream"}
-            await self._websocket.send(json.dumps(message))
+        try:
+            if self._websocket:
+                logger.debug("Sending CloseStream message to Deepgram Flux")
+                message = {"type": "CloseStream"}
+                await self._websocket.send(json.dumps(message))
+        except Exception as e:
+            await self.push_error(error_msg=f"Error sending closeStream: {e}", exception=e)
 
     def can_generate_metrics(self) -> bool:
         """Check if this service can generate processing metrics.
@@ -381,16 +403,13 @@ class DeepgramFluxSTTService(WebsocketSTTService):
                 are issues sending the audio data.
         """
         if not self._websocket:
-            logger.error("Not connected to Deepgram Flux.")
-            yield ErrorFrame("Not connected to Deepgram Flux.")
             return
 
         try:
             self._last_stt_time = time.monotonic()
             await self.send_with_retry(audio, self._report_error)
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
-            yield ErrorFrame(error=f"{self} error: {e}")
+            yield ErrorFrame(error=f"Unknown error occurred: {e}")
             return
 
         yield None
@@ -467,8 +486,7 @@ class DeepgramFluxSTTService(WebsocketSTTService):
                     # Skip malformed messages
                     continue
                 except Exception as e:
-                    logger.error(f"{self} exception: {e}")
-                    await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
+                    await self.push_error(error_msg=f"Unknown error occurred: {e}", exception=e)
                     # Error will be handled inside WebsocketService->_receive_task_handler
                     raise
             else:
@@ -580,8 +598,9 @@ class DeepgramFluxSTTService(WebsocketSTTService):
         """
         logger.debug("User started speaking")
         self._user_is_speaking = True
-        await self.push_interruption_task_frame_and_wait()
         await self.broadcast_frame(UserStartedSpeakingFrame)
+        if self._should_interrupt:
+            await self.push_interruption_task_frame_and_wait()
         await self.start_metrics()
         await self._call_event_handler("on_start_of_turn", transcript)
         if transcript:

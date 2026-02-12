@@ -1,17 +1,23 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
 
 import sys
-from importlib.metadata import version
+from importlib.metadata import version as lib_version
 
 from loguru import logger
 
-__version__ = version("piopiy-ai")
+__version__ = lib_version("piopiy-ai")
 
-logger.info(f"PIOPIY {__version__} (Python {sys.version}) ")
+logger.info(f"📞 Piopiy AI {__version__} (Python {sys.version}) 📞")
+
+
+def version() -> str:
+    """Returns the Piopiy AI version."""
+    return __version__
+
 
 # We replace `asyncio.wait_for()` for `wait_for2.wait_for()` for Python < 3.12.
 #

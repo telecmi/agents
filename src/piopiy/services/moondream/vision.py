@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -19,8 +19,10 @@ from PIL import Image
 from piopiy.frames.frames import (
     ErrorFrame,
     Frame,
-    TextFrame,
     UserImageRawFrame,
+    VisionFullResponseEndFrame,
+    VisionFullResponseStartFrame,
+    VisionTextFrame,
 )
 from piopiy.services.vision_service import VisionService
 
@@ -104,13 +106,8 @@ class MoondreamService(VisionService):
 
         Args:
             frame: The image frame to process.
-
-        Yields:
-            Frame: TextFrame containing the generated image description, or ErrorFrame
-                  if analysis fails.
         """
         if not self._model:
-            logger.error(f"{self} error: Moondream model not available ({self.model_name})")
             yield ErrorFrame("Moondream model not available")
             return
 
@@ -124,4 +121,6 @@ class MoondreamService(VisionService):
 
         description = await asyncio.to_thread(get_image_description, frame.image, frame.text)
 
-        yield TextFrame(text=description)
+        yield VisionFullResponseStartFrame()
+        yield VisionTextFrame(text=description)
+        yield VisionFullResponseEndFrame()

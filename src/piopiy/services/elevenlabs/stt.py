@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -29,8 +29,8 @@ from piopiy.frames.frames import (
     InterimTranscriptionFrame,
     StartFrame,
     TranscriptionFrame,
-    UserStartedSpeakingFrame,
-    UserStoppedSpeakingFrame,
+    VADUserStartedSpeakingFrame,
+    VADUserStoppedSpeakingFrame,
 )
 from piopiy.processors.frame_processor import FrameDirection
 from piopiy.services.stt_service import SegmentedSTTService, WebsocketSTTService
@@ -351,8 +351,7 @@ class ElevenLabsSTTService(SegmentedSTTService):
                 )
 
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
-            yield ErrorFrame(error=f"{self} error: {e}")
+            yield ErrorFrame(error=f"Unknown error occurred: {e}")
 
 
 def audio_format_from_sample_rate(sample_rate: int) -> str:
@@ -416,6 +415,9 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
                 Only used when commit_strategy is VAD. None uses ElevenLabs default.
             min_silence_duration_ms: Minimum silence duration for VAD (50-2000ms).
                 Only used when commit_strategy is VAD. None uses ElevenLabs default.
+            include_timestamps: Whether to include word-level timestamps in transcripts.
+            enable_logging: Whether to enable logging on ElevenLabs' side.
+            include_language_detection: Whether to include language detection in transcripts.
         """
 
         language_code: Optional[str] = None
@@ -424,6 +426,9 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
         vad_threshold: Optional[float] = None
         min_speech_duration_ms: Optional[int] = None
         min_silence_duration_ms: Optional[int] = None
+        include_timestamps: bool = False
+        enable_logging: bool = False
+        include_language_detection: bool = False
 
     def __init__(
         self,
@@ -459,6 +464,8 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
         self._audio_format = ""  # initialized in start()
         self._receive_task = None
 
+        self._settings = {"language": params.language_code}
+
     def can_generate_metrics(self) -> bool:
         """Check if the service can generate processing metrics.
 
@@ -477,7 +484,13 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
             Changing language requires reconnecting to the WebSocket.
         """
         logger.info(f"Switching STT language to: [{language}]")
-        self._params.language_code = language.value if isinstance(language, Language) else language
+        new_language = (
+            language_to_elevenlabs_language(language)
+            if isinstance(language, Language)
+            else language
+        )
+        self._params.language_code = new_language
+        self._settings["language"] = new_language
         # Reconnect with new settings
         await self._disconnect()
         await self._connect()
@@ -540,10 +553,10 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
         """
         await super().process_frame(frame, direction)
 
-        if isinstance(frame, UserStartedSpeakingFrame):
+        if isinstance(frame, VADUserStartedSpeakingFrame):
             # Start metrics when user starts speaking
             await self.start_metrics()
-        elif isinstance(frame, UserStoppedSpeakingFrame):
+        elif isinstance(frame, VADUserStoppedSpeakingFrame):
             # Send commit when user stops speaking (manual commit mode)
             if self._params.commit_strategy == CommitStrategy.MANUAL:
                 if self._websocket and self._websocket.state is State.OPEN:
@@ -586,13 +599,14 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
                 }
                 await self._websocket.send(json.dumps(message))
             except Exception as e:
-                logger.error(f"Error sending audio: {e}")
                 yield ErrorFrame(f"ElevenLabs Realtime STT error: {str(e)}")
 
         yield None
 
     async def _connect(self):
         """Establish WebSocket connection to ElevenLabs Realtime STT."""
+        await super()._connect()
+
         await self._connect_websocket()
 
         if self._websocket and not self._receive_task:
@@ -600,6 +614,8 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
 
     async def _disconnect(self):
         """Close WebSocket connection and cleanup tasks."""
+        await super()._disconnect()
+
         if self._receive_task:
             await self.cancel_task(self._receive_task)
             self._receive_task = None
@@ -620,9 +636,20 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
             if self._params.language_code:
                 params.append(f"language_code={self._params.language_code}")
 
-            params.append(f"encoding={self._audio_format}")
-            params.append(f"sample_rate={self.sample_rate}")
+            params.append(f"audio_format={self._audio_format}")
             params.append(f"commit_strategy={self._params.commit_strategy.value}")
+
+            # Add optional parameters
+            if self._params.include_timestamps:
+                params.append(f"include_timestamps={str(self._params.include_timestamps).lower()}")
+
+            if self._params.enable_logging:
+                params.append(f"enable_logging={str(self._params.enable_logging).lower()}")
+
+            if self._params.include_language_detection:
+                params.append(
+                    f"include_language_detection={str(self._params.include_language_detection).lower()}"
+                )
 
             # Add VAD parameters if using VAD commit strategy and values are specified
             if self._params.commit_strategy == CommitStrategy.VAD:
@@ -645,8 +672,9 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
             await self._call_event_handler("on_connected")
             logger.debug("Connected to ElevenLabs Realtime STT")
         except Exception as e:
-            logger.error(f"{self}: unable to connect to ElevenLabs Realtime STT: {e}")
-            await self.push_error(ErrorFrame(f"Connection error: {str(e)}"))
+            await self.push_error(
+                error_msg=f"Unable to connect to ElevenLabs Realtime STT: {e}", exception=e
+            )
 
     async def _disconnect_websocket(self):
         """Disconnect from ElevenLabs Realtime STT WebSocket."""
@@ -655,7 +683,7 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
                 logger.debug("Disconnecting from ElevenLabs Realtime STT")
                 await self._websocket.close()
         except Exception as e:
-            logger.error(f"{self} error closing websocket: {e}")
+            await self.push_error(error_msg=f"Error closing websocket: {e}", exception=e)
         finally:
             self._websocket = None
             await self._call_event_handler("on_disconnected")
@@ -673,8 +701,8 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
             return self._websocket
         raise Exception("Websocket not connected")
 
-    async def _process_messages(self):
-        """Process incoming WebSocket messages."""
+    async def _receive_messages(self):
+        """Continuously receive and process WebSocket messages."""
         async for message in self._get_websocket():
             try:
                 data = json.loads(message)
@@ -683,13 +711,6 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
                 logger.warning(f"Received non-JSON message: {message}")
             except Exception as e:
                 logger.error(f"Error processing message: {e}")
-
-    async def _receive_messages(self):
-        """Continuously receive and process WebSocket messages."""
-        try:
-            await self._process_messages()
-        except Exception as e:
-            logger.warning(f"{self} WebSocket connection closed: {e}")
             # Connection closed, will reconnect on next audio chunk
 
     async def _process_response(self, data: dict):
@@ -712,16 +733,24 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
         elif message_type == "committed_transcript_with_timestamps":
             await self._on_committed_transcript_with_timestamps(data)
 
-        elif message_type == "input_error":
-            error_msg = data.get("error", "Unknown input error")
-            logger.error(f"ElevenLabs input error: {error_msg}")
-            await self.push_error(ErrorFrame(f"Input error: {error_msg}"))
-
-        elif message_type in ["auth_error", "quota_exceeded", "transcriber_error", "error"]:
-            error_msg = data.get("error", data.get("message", "Unknown error"))
-            logger.error(f"ElevenLabs error ({message_type}): {error_msg}")
-            await self.push_error(ErrorFrame(f"{message_type}: {error_msg}"))
-
+        elif message_type in (
+            "error",
+            "auth_error",
+            "quota_exceeded_error",
+            "transcriber_error",
+            "input_error",
+            "commit_throttled",
+            "transcriber_error",
+            "unaccepted_terms_error",
+            "rate_limited",
+            "queue_overflow",
+            "resource_exhausted",
+            "session_time_limit_exceeded",
+            "chunk_size_exceeded",
+            "insufficient_audio_activity",
+        ):
+            error_msg = data.get("error", f"Unknown error - {message_type}")
+            await self.push_error(error_msg=f"Error: {error_msg}")
         else:
             logger.debug(f"Unknown message type: {message_type}")
 
@@ -765,6 +794,11 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
         Args:
             data: Committed transcript data.
         """
+        # If timestamps are enabled, skip this message and wait for the
+        # committed_transcript_with_timestamps message which contains all the data
+        if self._params.include_timestamps:
+            return
+
         text = data.get("text", "").strip()
         if not text:
             return
@@ -792,6 +826,18 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
     async def _on_committed_transcript_with_timestamps(self, data: dict):
         """Handle committed transcript with word-level timestamps.
 
+        This message is sent when include_timestamps=true. The result data includes:
+        - text: The transcribed text
+        - language_code: Detected language (if available)
+        - words: Array of word objects with timing information:
+            - text: The word text
+            - start: Start time in seconds
+            - end: End time in seconds
+            - type: "word" or "spacing"
+            - speaker_id: Speaker identifier (if available)
+            - logprob: Log probability score (if available)
+            - characters: Array of character strings (if available)
+
         Args:
             data: Committed transcript data with timestamps.
         """
@@ -799,9 +845,24 @@ class ElevenLabsRealtimeSTTService(WebsocketSTTService):
         if not text:
             return
 
-        logger.debug(f"Committed transcript with timestamps: [{text}]")
-        logger.trace(f"Timestamps: {data.get('words', [])}")
+        await self.stop_ttfb_metrics()
+        await self.stop_processing_metrics()
 
-        # This is sent after the committed_transcript, so we don't need to
-        # push another TranscriptionFrame, but we could use the timestamps
-        # for additional processing if needed in the future
+        # Get language if provided
+        language = data.get("language_code")
+
+        logger.debug(f"Committed transcript with timestamps: [{text}]")
+
+        await self._handle_transcription(text, True, language)
+
+        # This message is sent after committed_transcript when include_timestamps=true.
+        # It contains the full transcript data including text and word-level timestamps.
+        await self.push_frame(
+            TranscriptionFrame(
+                text,
+                self._user_id,
+                time_now_iso8601(),
+                language,
+                result=data,
+            )
+        )

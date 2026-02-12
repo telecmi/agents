@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -737,7 +737,6 @@ class GoogleHttpTTSService(TTSService):
             yield TTSStoppedFrame()
 
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
             error_message = f"TTS generation error: {str(e)}"
             yield ErrorFrame(error=error_message)
 
@@ -996,9 +995,7 @@ class GoogleTTSService(GoogleBaseTTSService):
                 yield frame
 
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
-            error_message = f"TTS generation error: {str(e)}"
-            yield ErrorFrame(error=error_message)
+            await self.push_error(error_msg=f"TTS generation error: {str(e)}", exception=e)
 
 
 class GeminiTTSService(GoogleBaseTTSService):
@@ -1248,6 +1245,5 @@ class GeminiTTSService(GoogleBaseTTSService):
                 yield frame
 
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
             error_message = f"Gemini TTS generation error: {str(e)}"
             yield ErrorFrame(error=error_message)

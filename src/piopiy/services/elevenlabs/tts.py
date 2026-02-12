@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -160,7 +160,7 @@ def build_elevenlabs_voice_settings(
 class PronunciationDictionaryLocator(BaseModel):
     """Locator for a pronunciation dictionary.
 
-    Attributes:
+    Parameters:
         pronunciation_dictionary_id: The ID of the pronunciation dictionary.
         version_id: The version ID of the pronunciation dictionary.
     """
@@ -424,8 +424,7 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
                         json.dumps({"context_id": self._context_id, "close_context": True})
                     )
             except Exception as e:
-                logger.error(f"{self} exception: {e}")
-                await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
+                await self.push_error(error_msg=f"Unknown error occurred: {e}", exception=e)
             self._context_id = None
             self._started = False
 
@@ -479,6 +478,8 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
                 await self.add_word_timestamps([("Reset", 0)])
 
     async def _connect(self):
+        await super()._connect()
+
         await self._connect_websocket()
 
         if self._websocket and not self._receive_task:
@@ -488,6 +489,8 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
             self._keepalive_task = self.create_task(self._keepalive_task_handler())
 
     async def _disconnect(self):
+        await super()._disconnect()
+
         if self._receive_task:
             await self.cancel_task(self._receive_task)
             self._receive_task = None
@@ -536,9 +539,8 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
 
             await self._call_event_handler("on_connected")
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
             self._websocket = None
-            await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
+            await self.push_error(error_msg=f"Unknown error occurred: {e}", exception=e)
             await self._call_event_handler("on_connection_error", f"{e}")
 
     async def _disconnect_websocket(self):
@@ -553,8 +555,7 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
                 await self._websocket.close()
                 logger.debug("Disconnected from ElevenLabs")
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
-            await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
+            await self.push_error(error_msg=f"Unknown error occurred: {e}", exception=e)
         finally:
             self._started = False
             self._context_id = None
@@ -584,8 +585,7 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
                     json.dumps({"context_id": self._context_id, "close_context": True})
                 )
             except Exception as e:
-                logger.error(f"{self} exception: {e}")
-                await self.push_error(ErrorFrame(error=f"{self} error: {e}"))
+                await self.push_error(error_msg=f"Unknown error occurred: {e}", exception=e)
             self._context_id = None
             self._started = False
             self._partial_word = ""
@@ -621,7 +621,7 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
 
             if msg.get("audio"):
                 await self.stop_ttfb_metrics()
-                self.start_word_timestamps()
+                await self.start_word_timestamps()
 
                 audio = base64.b64decode(msg["audio"])
                 frame = TTSAudioRawFrame(audio, self.sample_rate, 1)
@@ -713,11 +713,10 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
                     self._partial_word = ""
                     self._partial_word_start_time = 0.0
                     # If a context ID does not exist, create a new one and
-                    # register it. If an ID exists, that means the Pipeline is
-                    # configured for allow_interruptions=False, so continue
-                    # using the current ID. When interruptions are enabled
-                    # (e.g. allow_interruptions=True), user speech results in
-                    # an interruption, which resets the context ID.
+                    # register it. If an ID exists, that means the Pipeline
+                    # doesn't allow user interruptions, so continue using the
+                    # current ID. When interruptions are allowed, user speech
+                    # results in an interruption, which resets the context ID.
                     if not self._context_id:
                         self._context_id = str(uuid.uuid4())
                     if not self.audio_context_available(self._context_id):
@@ -735,20 +734,16 @@ class ElevenLabsTTSService(AudioContextWordTTSService):
                     await self._websocket.send(json.dumps(msg))
                     logger.trace(f"Created new context {self._context_id}")
 
-                    await self._send_text(text)
-                    await self.start_tts_usage_metrics(text)
-                else:
-                    await self._send_text(text)
+                await self._send_text(text)
+                await self.start_tts_usage_metrics(text)
             except Exception as e:
-                logger.error(f"{self} exception: {e}")
                 yield TTSStoppedFrame()
-                yield ErrorFrame(error=f"{self} error: {e}")
+                yield ErrorFrame(error=f"Unknown error occurred: {e}")
                 self._started = False
                 return
             yield None
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
-            yield ErrorFrame(error=f"{self} error: {e}")
+            yield ErrorFrame(error=f"Unknown error occurred: {e}")
 
 
 class ElevenLabsHttpTTSService(WordTTSService):
@@ -875,6 +870,11 @@ class ElevenLabsHttpTTSService(WordTTSService):
 
     def _set_voice_settings(self):
         return build_elevenlabs_voice_settings(self._settings)
+
+    async def _update_settings(self, settings: Mapping[str, Any]):
+        await super()._update_settings(settings)
+        # Update voice settings for the next context creation
+        self._voice_settings = self._set_voice_settings()
 
     def _reset_state(self):
         """Reset internal state variables."""
@@ -1043,7 +1043,6 @@ class ElevenLabsHttpTTSService(WordTTSService):
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
-                    logger.error(f"{self} error: {error_text}")
                     yield ErrorFrame(error=f"ElevenLabs API error: {error_text}")
                     return
 
@@ -1051,7 +1050,7 @@ class ElevenLabsHttpTTSService(WordTTSService):
 
                 # Start TTS sequence if not already started
                 if not self._started:
-                    self.start_word_timestamps()
+                    await self.start_word_timestamps()
                     yield TTSStartedFrame()
                     self._started = True
 
@@ -1091,8 +1090,7 @@ class ElevenLabsHttpTTSService(WordTTSService):
                         logger.warning(f"Failed to parse JSON from stream: {e}")
                         continue
                     except Exception as e:
-                        logger.error(f"{self} exception: {e}")
-                        yield ErrorFrame(error=f"{self} error: {e}")
+                        yield ErrorFrame(error=f"Unknown error occurred: {e}")
                         continue
 
                 # After processing all chunks, emit any remaining partial word
@@ -1116,8 +1114,7 @@ class ElevenLabsHttpTTSService(WordTTSService):
                     self._previous_text = text
 
         except Exception as e:
-            logger.error(f"{self} exception: {e}")
-            yield ErrorFrame(error=f"{self} error: {e}")
+            yield ErrorFrame(error=f"Unknown error occurred: {e}")
         finally:
             await self.stop_ttfb_metrics()
             # Let the parent class handle TTSStoppedFrame

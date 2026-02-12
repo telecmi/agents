@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024–2025, Daily
+# Copyright (c) 2024-2026, Daily
 #
 # SPDX-License-Identifier: BSD 2-Clause License
 #
@@ -11,6 +11,7 @@ Gemini Live API, supporting both text and audio modalities with
 voice transcription, streaming responses, and tool usage.
 """
 
+import asyncio
 import base64
 import io
 import time
@@ -27,11 +28,11 @@ from pydantic import BaseModel, Field
 from piopiy.adapters.schemas.tools_schema import ToolsSchema
 from piopiy.adapters.services.gemini_adapter import GeminiLLMAdapter
 from piopiy.frames.frames import (
+    AggregationType,
     BotStartedSpeakingFrame,
     BotStoppedSpeakingFrame,
     CancelFrame,
     EndFrame,
-    ErrorFrame,
     Frame,
     InputAudioRawFrame,
     InputImageRawFrame,
@@ -43,6 +44,9 @@ from piopiy.frames.frames import (
     LLMMessagesAppendFrame,
     LLMSetToolsFrame,
     LLMTextFrame,
+    LLMThoughtEndFrame,
+    LLMThoughtStartFrame,
+    LLMThoughtTextFrame,
     LLMUpdateSettingsFrame,
     StartFrame,
     TranscriptionFrame,
@@ -67,6 +71,7 @@ from piopiy.processors.aggregators.openai_llm_context import (
 )
 from piopiy.processors.frame_processor import FrameDirection
 from piopiy.services.google.frames import LLMSearchOrigin, LLMSearchResponseFrame, LLMSearchResult
+from piopiy.services.google.utils import update_google_client_http_options
 from piopiy.services.llm_service import FunctionCallFromLLM, LLMService
 from piopiy.services.openai.llm import (
     OpenAIAssistantContextAggregator,
@@ -561,18 +566,18 @@ class InputParams(BaseModel):
         context_window_compression: Context compression settings. Defaults to None.
         thinking: Thinking settings. Defaults to None.
             Note that these settings may require specifying a model that
-            supports them, e.g. "gemini-2.5-flash-native-audio-preview-09-2025".
+            supports them, e.g. "gemini-2.5-flash-native-audio-preview-12-2025".
         enable_affective_dialog: Enable affective dialog, which allows Gemini
             to adapt to expression and tone. Defaults to None.
             Note that these settings may require specifying a model that
-            supports them, e.g. "gemini-2.5-flash-native-audio-preview-09-2025".
+            supports them, e.g. "gemini-2.5-flash-native-audio-preview-12-2025".
             Also note that this setting may require specifying an API version that
             supports it, e.g. HttpOptions(api_version="v1alpha").
         proactivity: Proactivity settings, which allows Gemini to proactively
             decide how to behave, such as whether to avoid responding to
             content that is not relevant. Defaults to None.
             Note that these settings may require specifying a model that
-            supports them, e.g. "gemini-2.5-flash-native-audio-preview-09-2025".
+            supports them, e.g. "gemini-2.5-flash-native-audio-preview-12-2025".
             Also note that this setting may require specifying an API version that
             supports it, e.g. HttpOptions(api_version="v1alpha").
         extra: Additional parameters. Defaults to empty dict.
@@ -613,7 +618,7 @@ class GeminiLiveLLMService(LLMService):
         *,
         api_key: str,
         base_url: Optional[str] = None,
-        model="models/gemini-2.0-flash-live-001",
+        model="models/gemini-2.5-flash-native-audio-preview-12-2025",
         voice_id: str = "Charon",
         start_audio_paused: bool = False,
         start_video_paused: bool = False,
@@ -636,7 +641,7 @@ class GeminiLiveLLMService(LLMService):
                     Please use `http_options` to customize requests made by the
                     API client.
 
-            model: Model identifier to use. Defaults to "models/gemini-2.0-flash-live-001".
+            model: Model identifier to use. Defaults to "models/gemini-2.5-flash-native-audio-preview-12-2025".
             voice_id: TTS voice identifier. Defaults to "Charon".
             start_audio_paused: Whether to start with audio input paused. Defaults to False.
             start_video_paused: Whether to start with video input paused. Defaults to False.
@@ -680,7 +685,7 @@ class GeminiLiveLLMService(LLMService):
         self._video_input_paused = start_video_paused
         self._context = None
         self._api_key = api_key
-        self._http_options = http_options
+        self._http_options = update_google_client_http_options(http_options)
         self._session: AsyncSession = None
         self._connection_task = None
 
@@ -695,6 +700,7 @@ class GeminiLiveLLMService(LLMService):
         self._bot_audio_buffer = bytearray()
         self._bot_text_buffer = ""
         self._llm_output_buffer = ""
+        self._transcription_timeout_task = None
 
         self._sample_rate = 24000
 
@@ -1174,7 +1180,7 @@ class GeminiLiveLLMService(LLMService):
             self._connection_task = self.create_task(self._connection_task_handler(config=config))
 
         except Exception as e:
-            await self.push_error(ErrorFrame(error=f"{self} Initialization error: {e}"))
+            await self.push_error(error_msg=f"Initialization error: {e}", exception=e)
 
     async def _connection_task_handler(self, config: LiveConnectConfig):
         async with self._client.aio.live.connect(model=self._model_name, config=config) as session:
@@ -1251,11 +1257,11 @@ class GeminiLiveLLMService(LLMService):
         )
 
         if self._consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
-            logger.error(
+            error_msg = (
                 f"Max consecutive failures ({MAX_CONSECUTIVE_FAILURES}) reached, "
                 "treating as fatal error"
             )
-            await self.push_error(ErrorFrame(error=f"{self} Error in receive loop: {error}"))
+            await self.push_error(error_msg=error_msg, exception=error)
             return False
         else:
             logger.info(
@@ -1277,13 +1283,16 @@ class GeminiLiveLLMService(LLMService):
             if self._connection_task:
                 await self.cancel_task(self._connection_task, timeout=1.0)
                 self._connection_task = None
+            if self._transcription_timeout_task:
+                await self.cancel_task(self._transcription_timeout_task)
+                self._transcription_timeout_task = None
             if self._session:
                 await self._session.close()
                 self._session = None
             self._completed_tool_calls = set()
             self._disconnecting = False
         except Exception as e:
-            logger.error(f"{self} error disconnecting: {e}")
+            await self.push_error(error_msg=f"Error disconnecting: {e}", exception=e)
 
     async def _send_user_audio(self, frame):
         """Send user audio frame to Gemini Live API."""
@@ -1340,7 +1349,7 @@ class GeminiLiveLLMService(LLMService):
             return  # Ignore if less than 1 second has passed
 
         self._last_sent_time = now  # Update last sent time
-        logger.debug(f"Sending video frame to Gemini: {frame}")
+        logger.trace(f"Sending video frame to Gemini: {frame}")
 
         buffer = io.BytesIO()
         Image.frombytes(frame.format, frame.size, frame.image).save(buffer, format="JPEG")
@@ -1449,10 +1458,19 @@ class GeminiLiveLLMService(LLMService):
                 await self._set_bot_is_responding(True)
                 await self.push_frame(LLMFullResponseStartFrame())
 
-            self._bot_text_buffer += text
-            self._search_result_buffer += text  # Also accumulate for grounding
-            frame = LLMTextFrame(text=text)
-            await self.push_frame(frame)
+            # Check if this is a thought
+            if part.thought:
+                # Gemini Live emits fully-formed thoughts rather than chunks,
+                # so bracket each thought in start/end frames
+                await self.push_frame(LLMThoughtStartFrame())
+                await self.push_frame(LLMThoughtTextFrame(text))
+                await self.push_frame(LLMThoughtEndFrame())
+            else:
+                # Regular text response
+                self._bot_text_buffer += text
+                self._search_result_buffer += text  # Also accumulate for grounding
+                frame = LLMTextFrame(text=text)
+                await self.push_frame(frame)
 
         # Check for grounding metadata in server content
         if msg.server_content and msg.server_content.grounding_metadata:
@@ -1563,12 +1581,59 @@ class GeminiLiveLLMService(LLMService):
         """Handle a transcription result with tracing."""
         pass
 
+    async def _push_user_transcription(self, text: str, result: Optional[LiveServerMessage] = None):
+        """Push a user transcription frame upstream.
+
+        Helper method to ensure consistent handling of user transcriptions
+        from both punctuation-based and timeout-based paths.
+
+        Args:
+            text: The transcription text to push
+            result: Optional LiveServerMessage that triggered this transcription
+        """
+        await self._handle_user_transcription(text, True, self._settings["language"])
+        await self.push_frame(
+            TranscriptionFrame(
+                text=text,
+                user_id="",
+                timestamp=time_now_iso8601(),
+                result=result,
+            ),
+            FrameDirection.UPSTREAM,
+        )
+
+    async def _transcription_timeout_handler(self):
+        """Handle timeout for user transcription buffer.
+
+        If no new transcription messages arrive within the timeout period,
+        flush any remaining text in the buffer as a complete sentence.
+        """
+        try:
+            # Wait for timeout period (0.5 seconds)
+            await asyncio.sleep(0.5)
+
+            # If we still have buffered text after timeout, flush it
+            if self._user_transcription_buffer:
+                logger.trace(
+                    f"[Transcription:user:timeout] Flushing buffer: [{self._user_transcription_buffer}]"
+                )
+                complete_sentence = self._user_transcription_buffer
+                self._user_transcription_buffer = ""
+
+                await self._push_user_transcription(complete_sentence, result=None)
+        except asyncio.CancelledError:
+            # Task was cancelled because new transcription arrived. This is expected
+            # when back to back transcription messages arrive.
+            logger.trace("Transcription timeout task cancelled (new text arrived)")
+            raise
+
     async def _handle_msg_input_transcription(self, message: LiveServerMessage):
         """Handle the input transcription message.
 
         Gemini Live sends user transcriptions in either single words or multi-word
         phrases. As a result, we have to aggregate the input transcription. This handler
-        aggregates into sentences, splitting on the end of sentence markers.
+        aggregates into sentences, splitting on the end of sentence markers. If no
+        punctuation arrives within a timeout period, the buffer is flushed automatically.
         """
         if not message.server_content.input_transcription:
             return
@@ -1577,6 +1642,11 @@ class GeminiLiveLLMService(LLMService):
 
         if not text:
             return
+
+        # Cancel any existing timeout task since we received new text
+        if self._transcription_timeout_task:
+            await self.cancel_task(self._transcription_timeout_task)
+            self._transcription_timeout_task = None
 
         # Strip leading space from sentence starts if buffer is empty
         if text.startswith(" ") and not self._user_transcription_buffer:
@@ -1598,17 +1668,13 @@ class GeminiLiveLLMService(LLMService):
 
             # Send a TranscriptionFrame with the complete sentence
             logger.debug(f"[Transcription:user] [{complete_sentence}]")
-            await self._handle_user_transcription(
-                complete_sentence, True, self._settings["language"]
-            )
-            await self.push_frame(
-                TranscriptionFrame(
-                    text=complete_sentence,
-                    user_id="",
-                    timestamp=time_now_iso8601(),
-                    result=message,
-                ),
-                FrameDirection.UPSTREAM,
+            await self._push_user_transcription(complete_sentence, result=message)
+
+        # If there's still text in the buffer (no end-of-sentence marker found),
+        # start a timeout task to flush it later
+        if self._user_transcription_buffer:
+            self._transcription_timeout_task = self.create_task(
+                self._transcription_timeout_handler()
             )
 
     async def _handle_msg_output_transcription(self, message: LiveServerMessage):
@@ -1644,7 +1710,7 @@ class GeminiLiveLLMService(LLMService):
             await self.push_frame(TTSStartedFrame())
             await self.push_frame(LLMFullResponseStartFrame())
 
-        frame = TTSTextFrame(text=text)
+        frame = TTSTextFrame(text=text, aggregated_by=AggregationType.SENTENCE)
         # Gemini Live text already includes any necessary inter-chunk spaces
         frame.includes_inter_frame_spaces = True
 
@@ -1722,6 +1788,8 @@ class GeminiLiveLLMService(LLMService):
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens,
+            cache_read_input_tokens=usage.cached_content_token_count,
+            reasoning_tokens=usage.thoughts_token_count,
         )
 
         await self.start_llm_usage_metrics(tokens)
@@ -1742,7 +1810,7 @@ class GeminiLiveLLMService(LLMService):
         # state management, and that exponential backoff for retries can have
         # cost/stability implications for a service cluster, let's just treat a
         # send-side error as fatal.
-        await self.push_error(ErrorFrame(error=f"{self} Send error: {error}", fatal=True))
+        await self.push_error(error_msg=f"Send error: {error}")
 
     def create_context_aggregator(
         self,
@@ -1768,7 +1836,13 @@ class GeminiLiveLLMService(LLMService):
 
         Returns:
             A pair of user and assistant context aggregators.
+
+        .. deprecated:: 0.0.99
+            `create_context_aggregator()` is deprecated and will be removed in a future version.
+            Use the universal `LLMContext` and `LLMContextAggregatorPair` instead.
+            See `OpenAILLMContext` docstring for migration guide.
         """
+        # from_openai_context handles deprecation warning
         context = LLMContext.from_openai_context(context)
         assistant_params.expect_stripped_words = False
         return LLMContextAggregatorPair(
