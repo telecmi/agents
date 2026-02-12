@@ -1,5 +1,14 @@
 # Release v0.0.6 - Complete! 🎉
 
+## ✅ Published to PyPI
+
+**Package is live at:** [https://pypi.org/project/piopiy-ai/0.0.6/](https://pypi.org/project/piopiy-ai/0.0.6/)
+
+Installation:
+```bash
+pip install piopiy-ai==0.0.6
+```
+
 ## What's Ready for PyPI
 
 ### ✅ Package Updates

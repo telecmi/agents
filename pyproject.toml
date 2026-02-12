@@ -1,13 +1,12 @@
 [build-system]
-requires = ["setuptools>=64", "setuptools_scm>=8"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "piopiy-ai"
 version = "0.0.6"
 description = "📞 Telephonic-Grade Voice AI — 🌐 WebRTC-ready framework"
-license = "BSD-2-Clause"
-license-files = ["LICENSE"]
+license = {text = "BSD-2-Clause"}
 readme = "README.md"
 requires-python = ">=3.10"
 keywords = ["telecmi", "audio", "telephone", "ai", "telephone-ai", "voice-ai", "llm", "stt", "tts", "speech-recognition", "text-to-speech", "conversational-ai", "voice-agent", "real-time", "webrtc"]
@@ -15,7 +14,6 @@ keywords = ["telecmi", "audio", "telephone", "ai", "telephone-ai", "voice-ai", "
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -160,7 +158,7 @@ where = ["src"]
 [tool.setuptools.package-data]
 "piopiy" = ["py.typed"]
 "piopiy.transports.services.telecmi" = ["src/piopiy/transports/services/telecmi/ready.wav"]
-"piopiy.services.opensource.kokoro" = ["data/*.onnx", "data/*.bin"]
+
 "piopiy.audio.dtmf" = [
     "src/piopiy/audio/dtmf/dtmf-0.wav",
     "src/piopiy/audio/dtmf/dtmf-1.wav",
@@ -187,9 +185,7 @@ filterwarnings = [
     "ignore:'audioop' is deprecated:DeprecationWarning",
 ]
 
-[tool.setuptools_scm]
-local_scheme = "no-local-version"
-fallback_version = "0.0.0-dev"
+
 
 [tool.ruff]
 exclude = [".git", "*_pb2.py"]
