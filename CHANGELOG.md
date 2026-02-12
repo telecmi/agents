@@ -5,7 +5,7 @@ All notable changes to piopiy-ai will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.6] - 2026-02-12
+## [0.6.0] - 2026-02-12
 
 ### Added
 - **40+ Provider Examples**: Comprehensive examples for all major AI providers
@@ -44,5 +44,5 @@ Initial release with core functionality.
 
 ---
 
-[0.0.6]: https://github.com/telecmi/agents/compare/v0.5.1...v0.0.6
+[0.6.0]: https://github.com/telecmi/agents/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/telecmi/agents/releases/tag/v0.5.1

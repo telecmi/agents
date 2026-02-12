@@ -1,9 +1,9 @@
-# Release Checklist for v0.0.6
+# Release Checklist for v0.6.0
 
 ## Pre-Release Verification
 
 ### ✅ Code Quality
-- [x] Version updated to 0.0.6 in `pyproject.toml`
+- [x] Version updated to 0.6.0 in `pyproject.toml`
 - [x] CHANGELOG.md created with all changes documented
 - [x] All examples tested and working
 - [x] No syntax errors in any files
@@ -43,7 +43,7 @@ rm -rf dist/ build/ *.egg-info
 python -m build
 
 # Test installation locally
-pip install dist/piopiy_ai-0.0.6-py3-none-any.whl
+pip install dist/piopiy_ai-0.6.0-py3-none-any.whl
 
 # Verify imports
 python -c "from piopiy.agent import Agent; print('✅ Import successful')"
@@ -58,7 +58,7 @@ python example/basic/basic.py
 python -m twine upload --repository testpypi dist/*
 
 # Test installation from Test PyPI
-pip install --index-url https://test.pypi.org/simple/ piopiy-ai==0.0.6
+pip install --index-url https://test.pypi.org/simple/ piopiy-ai==0.6.0
 ```
 
 ## Release to PyPI
@@ -85,7 +85,7 @@ python -m twine upload dist/*
 ### Verify Release
 ```bash
 # Wait a few minutes, then install from PyPI
-pip install piopiy-ai==0.0.6
+pip install piopiy-ai==0.6.0
 
 # Verify installation
 python -c "from piopiy.agent import Agent; print('✅ PyPI release successful')"
@@ -96,15 +96,15 @@ python -c "from piopiy.agent import Agent; print('✅ PyPI release successful')"
 ### Git Tagging
 ```bash
 # Create and push git tag
-git tag -a v0.0.6 -m "Release v0.0.6 - 40+ provider examples"
-git push origin v0.0.6
+git tag -a v0.6.0 -m "Release v0.6.0 - 40+ provider examples"
+git push origin v0.6.0
 ```
 
 ### GitHub Release
 1. Go to https://github.com/telecmi/agents/releases
 2. Click "Draft a new release"
-3. Select tag: v0.0.6
-4. Title: "v0.0.6 - Comprehensive Provider Examples"
+3. Select tag: v0.6.0
+4. Title: "v0.6.0 - Comprehensive Provider Examples"
 5. Copy content from CHANGELOG.md
 6. Publish release
 
@@ -125,7 +125,7 @@ twine upload --repository pypi --skip-existing dist/*
 
 ## Notes
 
-- **Version**: 0.0.6
+- **Version**: 0.6.0
 - **Release Date**: 2026-02-12
 - **Major Changes**: 40+ provider examples, comprehensive documentation
 - **Breaking Changes**: None
