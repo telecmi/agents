@@ -34,7 +34,7 @@ try:
     from websockets.protocol import State
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Soniox, you need to `pip install pipecat-ai[soniox]`.")
+    logger.error("In order to use Soniox, you need to `pip install piopiy-ai[soniox]`.")
     raise Exception(f"Missing module: {e}")
 
 

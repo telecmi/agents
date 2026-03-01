@@ -123,7 +123,7 @@ class Mem0MemoryService(FrameProcessor):
             params = {
                 "async_mode": True,
                 "messages": messages,
-                "metadata": {"platform": "pipecat"},
+                "metadata": {"platform": "piopiy"},
                 "output_format": "v1.1",
             }
             for id in ["user_id", "agent_id", "run_id"]:

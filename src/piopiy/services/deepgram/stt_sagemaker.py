@@ -41,7 +41,7 @@ try:
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use DeepgramSageMakerSTTService, you need to `pip install pipecat-ai[deepgram,sagemaker]`."
+        "In order to use DeepgramSageMakerSTTService, you need to `pip install piopiy-ai[deepgram,sagemaker]`."
     )
     raise Exception(f"Missing module: {e}")
 

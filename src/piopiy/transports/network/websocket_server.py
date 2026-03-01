@@ -18,8 +18,8 @@ from piopiy.transports.websocket.server import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Module `pipecat.transports.network.websocket_server` is deprecated, "
-        "use `pipecat.transports.websocket.server` instead.",
+        "Module `piopiy.transports.network.websocket_server` is deprecated, "
+        "use `piopiy.transports.websocket.server` instead.",
         DeprecationWarning,
         stacklevel=2,
     )

@@ -7,11 +7,11 @@
 import platform
 from typing import Dict
 
-from piopiy import version as pipecat_version
+from piopiy import version as piopiy_version
 
 
 def sdk_headers() -> Dict[str, str]:
     """SDK identification headers for upstream providers."""
     return {
-        "User-Agent": f"Pipecat/{pipecat_version()} Python/{platform.python_version()}",
+        "User-Agent": f"Pipecat/{piopiy_version()} Python/{platform.python_version()}",
     }

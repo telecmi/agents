@@ -63,7 +63,7 @@ try:
     from websockets.asyncio import client as websocket_client
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Ultravox, you need to `pip install pipecat-ai[ultravox]`.")
+    logger.error("In order to use Ultravox, you need to `pip install piopiy-ai[ultravox]`.")
     raise Exception(f"Missing module: {e}")
 
 

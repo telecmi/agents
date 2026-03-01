@@ -19,9 +19,9 @@ from piopiy.services.openai.realtime.llm import OpenAIRealtimeLLMService
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Types in pipecat.services.openai_realtime are deprecated. "
+        "Types in piopiy.services.openai_realtime are deprecated. "
         "Please use the equivalent types from "
-        "pipecat.services.openai.realtime instead.",
+        "piopiy.services.openai.realtime instead.",
         DeprecationWarning,
         stacklevel=2,
     )

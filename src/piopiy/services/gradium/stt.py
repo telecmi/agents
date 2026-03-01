@@ -33,7 +33,7 @@ try:
     from websockets.protocol import State
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error('In order to use Gradium, you need to `pip install "pipecat-ai[gradium]"`.')
+    logger.error('In order to use Gradium, you need to `pip install "piopiy-ai[gradium]"`.')
     raise Exception(f"Missing module: {e}")
 
 SAMPLE_RATE = 24000
@@ -155,7 +155,7 @@ class GradiumSTTService(WebsocketSTTService):
             ws_url = self._api_endpoint_base_url
             headers = {
                 "x-api-key": self._api_key,
-                "x-api-source": "pipecat",
+                "x-api-source": "piopiy",
             }
             self._websocket = await websocket_connect(
                 ws_url,

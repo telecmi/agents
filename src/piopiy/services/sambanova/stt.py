@@ -41,7 +41,7 @@ class SambaNovaSTTService(BaseWhisperSTTService):  # type: ignore
             language: Language of the audio input. Defaults to English.
             prompt: Optional text to guide the model's style or continue a previous segment.
             temperature: Optional sampling temperature between 0 and 1. Defaults to 0.0.
-            **kwargs: Additional arguments passed to `pipecat.services.whisper.base_stt.BaseWhisperSTTService`.
+            **kwargs: Additional arguments passed to `piopiy.services.whisper.base_stt.BaseWhisperSTTService`.
         """
         super().__init__(
             model=model,

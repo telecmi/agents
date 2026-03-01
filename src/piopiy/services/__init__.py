@@ -19,7 +19,7 @@ def _warn_deprecated_access(globals: Dict[str, Any], attr, old: str, new: str):
         with warnings.catch_warnings():
             warnings.simplefilter("always")
             warnings.warn(
-                f"Module `pipecat.services.{old}` is deprecated, use `pipecat.services.{new}` instead.",
+                f"Module `piopiy.services.{old}` is deprecated, use `piopiy.services.{new}` instead.",
                 DeprecationWarning,
                 stacklevel=3,
             )
@@ -37,4 +37,4 @@ class DeprecatedModuleProxy:
     def __getattr__(self, attr):
         if attr in self._globals:
             return _warn_deprecated_access(self._globals, attr, self._old, self._new)
-        raise AttributeError(f"module 'pipecat.services.{self._old}' has no attribute '{attr}'")
+        raise AttributeError(f"module 'piopiy.services.{self._old}' has no attribute '{attr}'")

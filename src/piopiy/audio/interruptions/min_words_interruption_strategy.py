@@ -21,7 +21,7 @@ class MinWordsInterruptionStrategy(BaseInterruptionStrategy):
     .. deprecated:: 0.0.99
 
         This class is deprecated, use
-        `pipecat.turns.user_start.MinWordsUserTurnStartStrategy` with `PipelineTask`'s
+        `piopiy.turns.user_start.MinWordsUserTurnStartStrategy` with `PipelineTask`'s
         new `user_turn_strategies` parameter instead.
 
     """
@@ -41,8 +41,8 @@ class MinWordsInterruptionStrategy(BaseInterruptionStrategy):
         with warnings.catch_warnings():
             warnings.simplefilter("always")
             warnings.warn(
-                "'pipecat.audio.interruptions' is deprecated. "
-                "Use `pipecat.turns.user_start.MinWordsUserTurnStartStrategy` with `PipelineTask`'s "
+                "'piopiy.audio.interruptions' is deprecated. "
+                "Use `piopiy.turns.user_start.MinWordsUserTurnStartStrategy` with `PipelineTask`'s "
                 "new `user_turn_strategies` parameter instead.",
                 DeprecationWarning,
             )

@@ -22,7 +22,7 @@ except ModuleNotFoundError as e:
     RNNoise = None
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use the RNNoise filter, you need to `pip install pipecat-ai[rnnoise]`."
+        "In order to use the RNNoise filter, you need to `pip install piopiy-ai[rnnoise]`."
     )
 
 

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: BSD 2-Clause License
 #
 
-"""Krisp Instance manager for pipecat audio."""
+"""Krisp Instance manager for piopiy audio."""
 
 import atexit
 from threading import Lock

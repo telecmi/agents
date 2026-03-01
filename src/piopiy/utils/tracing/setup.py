@@ -35,7 +35,7 @@ def is_tracing_available() -> bool:
 
 
 def setup_tracing(
-    service_name: str = "pipecat",
+    service_name: str = "piopiy",
     exporter=None,  # User-provided exporter
     console_export: bool = False,
 ) -> bool:

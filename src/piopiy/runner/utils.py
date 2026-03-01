@@ -23,7 +23,7 @@ specific handlers for each transport type's unique requirements.
 
 Example::
 
-    from pipecat.runner.utils import parse_telephony_websocket
+    from piopiy.runner.utils import parse_telephony_websocket
 
     async def telephony_websocket_handler(websocket: WebSocket):
         transport_type, call_data = await parse_telephony_websocket(websocket)

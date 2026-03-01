@@ -8,7 +8,7 @@
 
 .. deprecated:: 0.0.96
     This module is deprecated. Please NvidiaSTTService from
-    pipecat.services.nvidia.stt instead.
+    piopiy.services.nvidia.stt instead.
 """
 
 import warnings
@@ -23,8 +23,8 @@ with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
         "RivaSTTService and ParakeetSTTService "
-        "from pipecat.services.riva.stt is deprecated. "
-        "Please use NvidiaSTTService from pipecat.services.nvidia.stt instead.",
+        "from piopiy.services.riva.stt is deprecated. "
+        "Please use NvidiaSTTService from piopiy.services.nvidia.stt instead.",
         DeprecationWarning,
         stacklevel=2,
     )

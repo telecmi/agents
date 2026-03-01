@@ -47,7 +47,7 @@ try:
     from tenacity import retry, stop_after_attempt, wait_exponential
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use LiveKit, you need to `pip install pipecat-ai[livekit]`.")
+    logger.error("In order to use LiveKit, you need to `pip install piopiy-ai[livekit]`.")
     raise Exception(f"Missing module: {e}")
 
 # DTMF mapping according to RFC 4733
@@ -300,7 +300,7 @@ class LiveKitTransportClient:
                     self._out_sample_rate, self._params.audio_out_channels
                 )
                 self._audio_track = rtc.LocalAudioTrack.create_audio_track(
-                    "pipecat-audio", self._audio_source
+                    "piopiy-audio", self._audio_source
                 )
                 options = rtc.TrackPublishOptions()
                 options.source = rtc.TrackSource.SOURCE_MICROPHONE
@@ -731,19 +731,19 @@ class LiveKitInputTransport(BaseInputTransport):
         async for audio_data in audio_iterator:
             if audio_data:
                 audio_frame_event, participant_id = audio_data
-                pipecat_audio_frame = await self._convert_livekit_audio_to_pipecat(
+                piopiy_audio_frame = await self._convert_livekit_audio_to_piopiy(
                     audio_frame_event
                 )
 
                 # Skip frames with no audio data
-                if len(pipecat_audio_frame.audio) == 0:
+                if len(piopiy_audio_frame.audio) == 0:
                     continue
 
                 input_audio_frame = UserAudioRawFrame(
                     user_id=participant_id,
-                    audio=pipecat_audio_frame.audio,
-                    sample_rate=pipecat_audio_frame.sample_rate,
-                    num_channels=pipecat_audio_frame.num_channels,
+                    audio=piopiy_audio_frame.audio,
+                    sample_rate=piopiy_audio_frame.sample_rate,
+                    num_channels=piopiy_audio_frame.num_channels,
                 )
                 await self.push_audio_frame(input_audio_frame)
 
@@ -754,23 +754,23 @@ class LiveKitInputTransport(BaseInputTransport):
         async for video_data in video_iterator:
             if video_data:
                 video_frame_event, participant_id = video_data
-                pipecat_video_frame = await self._convert_livekit_video_to_pipecat(
+                piopiy_video_frame = await self._convert_livekit_video_to_piopiy(
                     video_frame_event=video_frame_event
                 )
 
                 # Skip frames with no video data
-                if len(pipecat_video_frame.image) == 0:
+                if len(piopiy_video_frame.image) == 0:
                     continue
 
                 input_video_frame = UserImageRawFrame(
                     user_id=participant_id,
-                    image=pipecat_video_frame.image,
-                    size=pipecat_video_frame.size,
-                    format=pipecat_video_frame.format,
+                    image=piopiy_video_frame.image,
+                    size=piopiy_video_frame.size,
+                    format=piopiy_video_frame.format,
                 )
                 await self.push_video_frame(input_video_frame)
 
-    async def _convert_livekit_audio_to_pipecat(
+    async def _convert_livekit_audio_to_piopiy(
         self, audio_frame_event: rtc.AudioFrameEvent
     ) -> AudioRawFrame:
         """Convert LiveKit audio frame to Pipecat audio frame."""
@@ -786,7 +786,7 @@ class LiveKitInputTransport(BaseInputTransport):
             num_channels=audio_frame.num_channels,
         )
 
-    async def _convert_livekit_video_to_pipecat(
+    async def _convert_livekit_video_to_piopiy(
         self,
         video_frame_event: rtc.VideoFrameEvent,
     ) -> ImageRawFrame:
@@ -908,7 +908,7 @@ class LiveKitOutputTransport(BaseOutputTransport):
         Returns:
             True if the audio frame was written successfully, False otherwise.
         """
-        livekit_audio = self._convert_pipecat_audio_to_livekit(frame.audio)
+        livekit_audio = self._convert_piopiy_audio_to_livekit(frame.audio)
         return await self._client.publish_audio(livekit_audio)
 
     def _supports_native_dtmf(self) -> bool:
@@ -927,14 +927,14 @@ class LiveKitOutputTransport(BaseOutputTransport):
         """
         await self._client.send_dtmf(frame.button.value)
 
-    def _convert_pipecat_audio_to_livekit(self, pipecat_audio: bytes) -> rtc.AudioFrame:
+    def _convert_piopiy_audio_to_livekit(self, piopiy_audio: bytes) -> rtc.AudioFrame:
         """Convert Pipecat audio data to LiveKit audio frame."""
         bytes_per_sample = 2  # Assuming 16-bit audio
-        total_samples = len(pipecat_audio) // bytes_per_sample
+        total_samples = len(piopiy_audio) // bytes_per_sample
         samples_per_channel = total_samples // self._params.audio_out_channels
 
         return rtc.AudioFrame(
-            data=pipecat_audio,
+            data=piopiy_audio,
             sample_rate=self.sample_rate,
             num_channels=self._params.audio_out_channels,
             samples_per_channel=samples_per_channel,

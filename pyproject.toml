@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piopiy-ai"
-version = "0.6.0"
+version = "0.6.1"
 description = "📞 Telephonic-Grade Voice AI — 🌐 WebRTC-ready framework"
 license = {text = "BSD-2-Clause"}
 readme = "README.md"
@@ -173,8 +173,8 @@ where = ["src"]
     "src/piopiy/audio/dtmf/dtmf-pound.wav",
     "src/piopiy/audio/dtmf/dtmf-star.wav",
 ]
-"piopiy.services.aws_nova_sonic" = ["src/pipecat/services/aws_nova_sonic/ready.wav"]
-"piopiy.audio.turn.smart_turn.data" = ["src/pipecat/audio/turn/smart_turn/data/smart-turn-v3.2-cpu.onnx"]
+"piopiy.services.aws_nova_sonic" = ["src/piopiy/services/aws_nova_sonic/ready.wav"]
+"piopiy.audio.turn.smart_turn.data" = ["src/piopiy/audio/turn/smart_turn/data/smart-turn-v3.2-cpu.onnx"]
 "piopiy.audio.vad" = ["data/silero_vad.onnx"]
 [tool.pytest.ini_options]
 addopts = "--verbose"

@@ -13,9 +13,9 @@ from piopiy.services.openai.realtime.frames import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Types in pipecat.services.openai_realtime.frames are deprecated. "
+        "Types in piopiy.services.openai_realtime.frames are deprecated. "
         "Please use the equivalent types from "
-        "pipecat.services.openai.realtime.frames instead.",
+        "piopiy.services.openai.realtime.frames instead.",
         DeprecationWarning,
         stacklevel=2,
     )

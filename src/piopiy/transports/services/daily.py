@@ -18,8 +18,8 @@ from piopiy.transports.daily.transport import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Module `pipecat.transports.services.daily` is deprecated, "
-        "use `pipecat.transports.daily.transport` instead.",
+        "Module `piopiy.transports.services.daily` is deprecated, "
+        "use `piopiy.transports.daily.transport` instead.",
         DeprecationWarning,
         stacklevel=2,
     )

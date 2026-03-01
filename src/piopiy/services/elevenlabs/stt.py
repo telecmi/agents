@@ -44,7 +44,7 @@ try:
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use ElevenLabs Realtime STT, you need to `pip install pipecat-ai[elevenlabs]`."
+        "In order to use ElevenLabs Realtime STT, you need to `pip install piopiy-ai[elevenlabs]`."
     )
     raise Exception(f"Missing module: {e}")
 

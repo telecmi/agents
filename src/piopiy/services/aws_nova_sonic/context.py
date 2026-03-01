@@ -14,7 +14,7 @@ including conversation history management and role-specific message processing.
     It now uses `LLMContext` and `LLMContextAggregatorPair`.
     Using the new patterns should allow you to not need types from this module.
 
-    See deprecation warning in pipecat.services.aws.nova_sonic.context for more
+    See deprecation warning in piopiy.services.aws.nova_sonic.context for more
     details.
 """
 

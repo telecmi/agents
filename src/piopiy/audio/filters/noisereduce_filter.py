@@ -22,7 +22,7 @@ try:
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use the noisereduce filter, you need to `pip install pipecat-ai[noisereduce]`."
+        "In order to use the noisereduce filter, you need to `pip install piopiy-ai[noisereduce]`."
     )
     raise Exception(f"Missing module: {e}")
 

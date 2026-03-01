@@ -43,7 +43,7 @@ try:
     from websockets.protocol import State
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use websockets, you need to `pip install pipecat-ai[websocket]`.")
+    logger.error("In order to use websockets, you need to `pip install piopiy-ai[websocket]`.")
     raise Exception(f"Missing module: {e}")
 
 

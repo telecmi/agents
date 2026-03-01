@@ -17,7 +17,7 @@ from urllib.parse import urlencode
 
 from loguru import logger
 
-from piopiy import version as pipecat_version
+from piopiy import version as piopiy_version
 from piopiy.frames.frames import (
     CancelFrame,
     EndFrame,
@@ -47,7 +47,7 @@ try:
     from websockets.protocol import State
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error('In order to use AssemblyAI, you need to `pip install "pipecat-ai[assemblyai]"`.')
+    logger.error('In order to use AssemblyAI, you need to `pip install "piopiy-ai[assemblyai]"`.')
     raise Exception(f"Missing module: {e}")
 
 
@@ -258,7 +258,7 @@ class AssemblyAISTTService(WebsocketSTTService):
             ws_url = self._build_ws_url()
             headers = {
                 "Authorization": self._api_key,
-                "User-Agent": f"AssemblyAI/1.0 (integration=Pipecat/{pipecat_version()})",
+                "User-Agent": f"AssemblyAI/1.0 (integration=Pipecat/{piopiy_version()})",
             }
             self._websocket = await websocket_connect(
                 ws_url,

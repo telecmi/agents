@@ -38,7 +38,7 @@ try:
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use DeepgramWebsocketTTSService, you need to `pip install pipecat-ai[deepgram]`."
+        "In order to use DeepgramWebsocketTTSService, you need to `pip install piopiy-ai[deepgram]`."
     )
     raise Exception(f"Missing module: {e}")
 

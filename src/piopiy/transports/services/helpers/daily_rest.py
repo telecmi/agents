@@ -16,8 +16,8 @@ from piopiy.transports.daily.utils import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Module `pipecat.transports.services.helpers.daily_rest` is deprecated, "
-        "use `pipecat.transports.daily.utils` instead.",
+        "Module `piopiy.transports.services.helpers.daily_rest` is deprecated, "
+        "use `piopiy.transports.daily.utils` instead.",
         DeprecationWarning,
         stacklevel=2,
     )

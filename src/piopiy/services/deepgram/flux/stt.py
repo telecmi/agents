@@ -38,7 +38,7 @@ try:
     from websockets.protocol import State
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Deepgram Flux, you need to `pip install pipecat-ai[deepgram]`.")
+    logger.error("In order to use Deepgram Flux, you need to `pip install piopiy-ai[deepgram]`.")
     raise Exception(f"Missing module: {e}")
 
 

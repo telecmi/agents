@@ -55,7 +55,7 @@ class TavusVideoService(AIService):
         *,
         api_key: str,
         replica_id: str,
-        persona_id: str = "pipecat-stream",
+        persona_id: str = "piopiy-stream",
         session: aiohttp.ClientSession,
         **kwargs,
     ) -> None:
@@ -64,7 +64,7 @@ class TavusVideoService(AIService):
         Args:
             api_key: Tavus API key used for authentication.
             replica_id: ID of the Tavus voice replica to use for speech synthesis.
-            persona_id: ID of the Tavus persona. Defaults to "pipecat-stream" for Pipecat TTS voice.
+            persona_id: ID of the Tavus persona. Defaults to "piopiy-stream" for Pipecat TTS voice.
             session: Async HTTP session used for communication with Tavus.
             **kwargs: Additional arguments passed to the parent AIService class.
         """

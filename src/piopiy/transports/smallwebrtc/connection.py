@@ -33,7 +33,7 @@ try:
     from av.frame import Frame
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use the SmallWebRTC, you need to `pip install pipecat-ai[webrtc]`.")
+    logger.error("In order to use the SmallWebRTC, you need to `pip install piopiy-ai[webrtc]`.")
     raise Exception(f"Missing module: {e}")
 
 SIGNALLING_TYPE = "signalling"

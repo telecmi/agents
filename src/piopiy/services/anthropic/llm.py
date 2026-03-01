@@ -65,7 +65,7 @@ try:
     from anthropic import NOT_GIVEN, APITimeoutError, AsyncAnthropic, NotGiven
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Anthropic, you need to `pip install pipecat-ai[anthropic]`.")
+    logger.error("In order to use Anthropic, you need to `pip install piopiy-ai[anthropic]`.")
     raise Exception(f"Missing module: {e}")
 
 

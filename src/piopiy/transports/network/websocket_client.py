@@ -18,8 +18,8 @@ from piopiy.transports.websocket.client import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Module `pipecat.transports.network.websocket_client` is deprecated, "
-        "use `pipecat.transports.websocket.client` instead.",
+        "Module `piopiy.transports.network.websocket_client` is deprecated, "
+        "use `piopiy.transports.websocket.client` instead.",
         DeprecationWarning,
         stacklevel=2,
     )

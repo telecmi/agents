@@ -23,7 +23,7 @@ Environment variables:
 Example::
 
     import aiohttp
-    from pipecat.runner.daily import configure
+    from piopiy.runner.daily import configure
 
     async with aiohttp.ClientSession() as session:
         # Standard room
@@ -192,7 +192,7 @@ async def configure(
         return DailyRoomConfig(room_url=room_url, token=token)
 
     # Create a new room
-    room_prefix = "pipecat-sip" if sip_enabled else "pipecat"
+    room_prefix = "piopiy-sip" if sip_enabled else "piopiy"
     room_name = f"{room_prefix}-{uuid.uuid4().hex[:8]}"
     logger.info(f"Creating new Daily room: {room_name}")
 

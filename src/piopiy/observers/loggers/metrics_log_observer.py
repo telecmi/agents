@@ -49,7 +49,7 @@ class MetricsLogObserver(BaseObserver):
 
         Log only LLM and TTS metrics::
 
-            from pipecat.metrics.metrics import LLMUsageMetricsData, TTSUsageMetricsData
+            from piopiy.metrics.metrics import LLMUsageMetricsData, TTSUsageMetricsData
             observers = [
                 MetricsLogObserver(
                     include_metrics={LLMUsageMetricsData, TTSUsageMetricsData}

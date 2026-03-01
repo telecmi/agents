@@ -18,8 +18,8 @@ from piopiy.transports.tavus.transport import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Module `pipecat.transports.services.tavus` is deprecated, "
-        "use `pipecat.transports.tavus.transport` instead.",
+        "Module `piopiy.transports.services.tavus` is deprecated, "
+        "use `piopiy.transports.tavus.transport` instead.",
         DeprecationWarning,
         stacklevel=2,
     )

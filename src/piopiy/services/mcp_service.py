@@ -26,7 +26,7 @@ try:
     from mcp.client.streamable_http import streamablehttp_client
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use an MCP client, you need to `pip install pipecat-ai[mcp]`.")
+    logger.error("In order to use an MCP client, you need to `pip install piopiy-ai[mcp]`.")
     raise Exception(f"Missing module: {e}")
 
 ServerParameters: TypeAlias = StdioServerParameters | SseServerParameters | StreamableHttpParameters
@@ -126,7 +126,7 @@ class MCPClient(BaseObject):
         for function_schema in tools_schema.standard_tools:
             llm.register_function(function_schema.name, self._tool_wrapper)
 
-    def _convert_mcp_schema_to_pipecat(
+    def _convert_mcp_schema_to_piopiy(
         self, tool_name: str, tool_schema: Dict[str, Any]
     ) -> FunctionSchema:
         """Convert an mcp tool schema to Pipecat's FunctionSchema format.
@@ -314,7 +314,7 @@ class MCPClient(BaseObject):
 
             try:
                 # Convert the schema
-                function_schema = self._convert_mcp_schema_to_pipecat(
+                function_schema = self._convert_mcp_schema_to_piopiy(
                     tool_name,
                     {"description": tool.description, "input_schema": tool.inputSchema},
                 )

@@ -13,16 +13,14 @@ from piopiy.pipeline.pipeline import Pipeline
 from piopiy.pipeline.runner import PipelineRunner
 from piopiy.pipeline.task import PipelineParams, PipelineTask
 from piopiy.processors.frame_processor import FrameProcessor
+from piopiy.processors.aggregators.llm_response_universal import LLMContextAggregatorPair, LLMUserAggregatorParams
+from piopiy.processors.aggregators.llm_context import LLMContext
+from piopiy.turns.user_start.min_words_user_turn_start_strategy import MinWordsUserTurnStartStrategy
+from piopiy.turns.user_turn_strategies import UserTurnStrategies
 from piopiy.audio.interruptions.base_interruption_strategy import BaseInterruptionStrategy
-from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.transports.base_transport import BaseTransport
 from piopiy.transports.services.telecmi import TelecmiParams, TelecmiTransport
 from piopiy.pipeline.service_switcher import ServiceSwitcher
-
-try:
-    from piopiy.processors.aggregators.openai_llm_context import OpenAILLMContext
-except Exception:
-    OpenAILLMContext = None  # type: ignore
 
 
 # --- NEW: map your public VAD config -> Silero kwargs -------------------------
@@ -222,13 +220,22 @@ class VoiceAgent:
             names = {s.name for s in tool_schemas}
             tool_schemas.extend([s for s in self._tools if s.name not in names])
 
-        if OpenAILLMContext and hasattr(self._llm, "create_context_aggregator"):
-            tools_schema = ToolsSchema(standard_tools=tool_schemas) if tool_schemas else None
-            ctx = OpenAILLMContext(self._messages, tools_schema) if tools_schema else OpenAILLMContext(self._messages)
-            if self._mcp_client:
-                ctx = OpenAILLMContext(self._messages, tools=self._mcp_client) if self._mcp_client else OpenAILLMContext(self._messages)
-            self.context_aggregator = self._llm.create_context_aggregator(ctx)
-            self._processors.append(self.context_aggregator.user())
+        tools_schema = ToolsSchema(standard_tools=tool_schemas) if tool_schemas else None
+        
+        ctx = LLMContext(self._messages, tools_schema) if tools_schema else LLMContext(self._messages)
+        if self._mcp_client:
+            ctx = LLMContext(self._messages, tools=self._mcp_client) if self._mcp_client else LLMContext(self._messages)
+
+        user_turn_strategies = UserTurnStrategies(
+            start=[self._interruption_strategy or MinWordsUserTurnStartStrategy(min_words=1)]
+        ) if self._allow_interruptions else UserTurnStrategies()
+        
+        user_params = LLMUserAggregatorParams(
+            user_turn_strategies=user_turn_strategies,
+        )
+
+        self.context_aggregator = LLMContextAggregatorPair(context=ctx, user_params=user_params)
+        self._processors.append(self.context_aggregator.user())
 
         by_name = {s.name: s for s in tool_schemas}
 
@@ -261,16 +268,15 @@ class VoiceAgent:
             enable_metrics=self._enable_metrics,
             enable_usage_metrics=self._enable_usage_metrics,
             allow_interruptions=self._allow_interruptions,
-            interruption_strategy=(
-                self._interruption_strategy or MinWordsInterruptionStrategy(min_words=1)
-                if self._allow_interruptions else None
-            ),
+        )
+
+        self._task = PipelineTask(
+            self._pipe, 
+            params=params,
             idle_timeout_secs=self._idle_timeout_secs,
             idle_timeout_frames=(BotSpeakingFrame, LLMFullResponseEndFrame),
             cancel_on_idle_timeout=True,
         )
-
-        self._task = PipelineTask(self._pipe, params=params)
         self._runner = PipelineRunner(handle_sigint=False)
 
         @self._transport.event_handler("on_first_participant_joined")

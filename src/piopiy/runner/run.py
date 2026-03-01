@@ -13,7 +13,7 @@ supports multiple transport types with a unified interface.
 
 Install with::
 
-    pip install pipecat-ai[runner]
+    pip install piopiy-ai[runner]
 
 All bots must implement a `bot(runner_args)` async function as the entry point.
 The server automatically discovers and executes this function when connections
@@ -32,7 +32,7 @@ Single transport example::
         await run_pipeline(transport)
 
     if __name__ == "__main__":
-        from pipecat.runner.run import main
+        from piopiy.runner.run import main
         main()
 
 Multiple transport example::
@@ -95,9 +95,9 @@ try:
     from fastapi.responses import HTMLResponse, RedirectResponse
 except ImportError as e:
     logger.error(f"Runner dependencies not available: {e}")
-    logger.error("To use Pipecat runners, install with: pip install pipecat-ai[runner]")
+    logger.error("To use Pipecat runners, install with: pip install piopiy-ai[runner]")
     raise ImportError(
-        "Runner dependencies required. Install with: pip install pipecat-ai[runner]"
+        "Runner dependencies required. Install with: pip install piopiy-ai[runner]"
     ) from e
 
 
@@ -204,7 +204,7 @@ def _setup_webrtc_routes(
 ):
     """Set up WebRTC-specific routes."""
     try:
-        from pipecat_ai_small_webrtc_prebuilt.frontend import SmallWebRTCPrebuiltUI
+        from piopiy_ai_small_webrtc_prebuilt.frontend import SmallWebRTCPrebuiltUI
 
         from piopiy.transports.smallwebrtc.connection import SmallWebRTCConnection
         from piopiy.transports.smallwebrtc.request_handler import (
@@ -406,7 +406,7 @@ def _setup_whatsapp_routes(app: FastAPI):
         return
 
     try:
-        from pipecat_ai_small_webrtc_prebuilt.frontend import SmallWebRTCPrebuiltUI
+        from piopiy_ai_small_webrtc_prebuilt.frontend import SmallWebRTCPrebuiltUI
 
         from piopiy.transports.smallwebrtc.connection import SmallWebRTCConnection
         from piopiy.transports.smallwebrtc.request_handler import (

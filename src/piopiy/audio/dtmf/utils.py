@@ -53,7 +53,7 @@ async def load_dtmf_audio(button: KeypadEntry, *, sample_rate: int = 8000) -> by
             __DTMF_RESAMPLER__ = create_file_resampler()
 
         dtmf_file_name = __DTMF_FILE_NAME.get(button, f"dtmf-{button.value}.wav")
-        dtmf_file_path = files("pipecat.audio.dtmf").joinpath(dtmf_file_name)
+        dtmf_file_path = files("piopiy.audio.dtmf").joinpath(dtmf_file_name)
 
         async with aiofiles.open(dtmf_file_path, "rb") as f:
             data = await f.read()

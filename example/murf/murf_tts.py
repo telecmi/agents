@@ -6,7 +6,7 @@ Murf.ai provides high-quality, natural-sounding voices with extensive customizat
 
 Requirements:
     pip install piopiy-ai[deepgram,openai,silero]
-    pip install pipecat-murf-tts
+    pip install piopiy-murf-tts
 
 Environment Variables:
     AGENT_ID - Your Piopiy agent ID
@@ -27,7 +27,7 @@ from piopiy.services.deepgram.stt import DeepgramSTTService
 from piopiy.services.openai.llm import OpenAILLMService
 
 # Import Murf TTS from the external package
-from pipecat_murf_tts import MurfTTSService
+from piopiy_murf_tts import MurfTTSService
 
 load_dotenv()
 

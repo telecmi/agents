@@ -63,7 +63,7 @@ try:
     from websockets.asyncio.client import connect as websocket_connect
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Grok Realtime, you need to `pip install pipecat-ai[grok]`.")
+    logger.error("In order to use Grok Realtime, you need to `pip install piopiy-ai[grok]`.")
     raise Exception(f"Missing module: {e}")
 
 

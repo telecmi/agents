@@ -13,7 +13,7 @@ from piopiy.utils.sync.base_notifier import BaseNotifier
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Package pipecat.sync is deprecated, use pipecat.utils.sync instead.",
+        "Package piopiy.sync is deprecated, use piopiy.utils.sync instead.",
         DeprecationWarning,
         stacklevel=2,
     )

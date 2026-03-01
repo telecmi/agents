@@ -21,7 +21,7 @@ try:
     from openpipe import AsyncOpenAI as OpenPipeAI
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use OpenPipe, you need to `pip install pipecat-ai[openpipe]`.")
+    logger.error("In order to use OpenPipe, you need to `pip install piopiy-ai[openpipe]`.")
     raise Exception(f"Missing module: {e}")
 
 

@@ -65,7 +65,7 @@ try:
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use the Daily transport, you need to `pip install pipecat-ai[daily]`."
+        "In order to use the Daily transport, you need to `pip install piopiy-ai[daily]`."
     )
     raise Exception(f"Missing module: {e}")
 

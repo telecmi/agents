@@ -47,7 +47,7 @@ try:
     from websockets.protocol import State
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use ElevenLabs, you need to `pip install pipecat-ai[elevenlabs]`.")
+    logger.error("In order to use ElevenLabs, you need to `pip install piopiy-ai[elevenlabs]`.")
     raise Exception(f"Missing module: {e}")
 
 ElevenLabsOutputFormat = Literal["pcm_16000", "pcm_22050", "pcm_24000", "pcm_44100"]
@@ -850,7 +850,7 @@ class ElevenLabsHttpTTSService(WordTTSService):
         self._partial_word_start_time = 0.0
 
     def language_to_service_language(self, language: Language) -> Optional[str]:
-        """Convert pipecat Language to ElevenLabs language code.
+        """Convert piopiy Language to ElevenLabs language code.
 
         Args:
             language: The language to convert.

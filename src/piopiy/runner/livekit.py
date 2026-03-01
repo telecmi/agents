@@ -22,7 +22,7 @@ Required environment variables:
 
 Example::
 
-    from pipecat.runner.livekit import configure
+    from piopiy.runner.livekit import configure
 
     url, token, room_name = await configure()
     # Use with LiveKitTransport

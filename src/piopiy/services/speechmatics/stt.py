@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from loguru import logger
 from pydantic import BaseModel
 
-from piopiy import version as pipecat_version
+from piopiy import version as piopiy_version
 from piopiy.frames.frames import (
     BotStartedSpeakingFrame,
     BotStoppedSpeakingFrame,
@@ -55,7 +55,7 @@ try:
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use Speechmatics, you need to `pip install pipecat-ai[speechmatics]`."
+        "In order to use Speechmatics, you need to `pip install piopiy-ai[speechmatics]`."
     )
     raise Exception(f"Missing module: {e}")
 
@@ -398,7 +398,7 @@ class SpeechmaticsSTTService(STTService):
         self._client: VoiceAgentClient = VoiceAgentClient(
             api_key=self._api_key,
             url=self._base_url,
-            app=f"pipecat/{pipecat_version()}",
+            app=f"piopiy/{piopiy_version()}",
             config=self._config,
         )
 

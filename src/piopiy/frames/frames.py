@@ -73,8 +73,8 @@ class DeprecatedKeypadEntry:
         with warnings.catch_warnings():
             warnings.simplefilter("always")
             warnings.warn(
-                "`pipecat.frames.frames.KeypadEntry` is deprecated and will be removed in a future version. "
-                "Use `pipecat.audio.dtmf.types.KeypadEntry` instead.",
+                "`piopiy.frames.frames.KeypadEntry` is deprecated and will be removed in a future version. "
+                "Use `piopiy.audio.dtmf.types.KeypadEntry` instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )

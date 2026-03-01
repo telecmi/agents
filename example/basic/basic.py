@@ -175,7 +175,7 @@ async def main():
         create_session=create_session,
         
         # OPTIONAL: Debug mode
-        debug=os.getenv("AGENT_DEBUG", "").lower() == "true",
+        debug=True,
         
         # OPTIONAL: Custom event handlers
         # on_call_started=lambda call_id: print(f"Call {call_id} started"),

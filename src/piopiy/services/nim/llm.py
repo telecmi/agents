@@ -11,7 +11,7 @@ Microservice) API while maintaining compatibility with the OpenAI-style interfac
 
 .. deprecated:: 0.0.96
     This module is deprecated. Please NvidiaLLMService from
-    pipecat.services.nvidia.llm instead.
+    piopiy.services.nvidia.llm instead.
 """
 
 import warnings
@@ -21,8 +21,8 @@ from piopiy.services.nvidia.llm import NvidiaLLMService
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "NimLLMService from pipecat.services.nim.llm is deprecated. "
-        "Please use NvidiaLLMService from pipecat.services.nvidia.llm instead.",
+        "NimLLMService from piopiy.services.nim.llm is deprecated. "
+        "Please use NvidiaLLMService from piopiy.services.nvidia.llm instead.",
         DeprecationWarning,
         stacklevel=2,
     )

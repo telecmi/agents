@@ -20,7 +20,7 @@ import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Types in pipecat.services.openai.realtime.frames are deprecated. \n"
+        "Types in piopiy.services.openai.realtime.frames are deprecated. \n"
         "OpenAI Realtime no longer uses types from this module under the hood. \n\n"
         "It now works more like other LLM services in Pipecat, relying on updates to \n"
         "its context, pushed by context aggregators, to update its internal state.\n\n"

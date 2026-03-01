@@ -173,7 +173,7 @@ class TavusTransportClient:
         callbacks: TavusCallbacks,
         api_key: str,
         replica_id: str,
-        persona_id: str = "pipecat-stream",
+        persona_id: str = "piopiy-stream",
         session: aiohttp.ClientSession,
     ) -> None:
         """Initialize the Tavus transport client.
@@ -184,7 +184,7 @@ class TavusTransportClient:
             callbacks: Callback handlers for Tavus-related events.
             api_key: API key for authenticating with Tavus API.
             replica_id: ID of the replica to use in the Tavus conversation.
-            persona_id: ID of the Tavus persona. Defaults to "pipecat-stream",
+            persona_id: ID of the Tavus persona. Defaults to "piopiy-stream",
                 which signals Tavus to use the TTS voice of the Pipecat bot
                 instead of a Tavus persona voice.
             session: The aiohttp session for making async HTTP requests.
@@ -669,7 +669,7 @@ class TavusTransport(BaseTransport):
         session: aiohttp.ClientSession,
         api_key: str,
         replica_id: str,
-        persona_id: str = "pipecat-stream",
+        persona_id: str = "piopiy-stream",
         params: TavusParams = TavusParams(),
         input_name: Optional[str] = None,
         output_name: Optional[str] = None,
@@ -681,7 +681,7 @@ class TavusTransport(BaseTransport):
             session: aiohttp session used for async HTTP requests.
             api_key: Tavus API key for authentication.
             replica_id: ID of the replica model used for voice generation.
-            persona_id: ID of the Tavus persona. Defaults to "pipecat-stream"
+            persona_id: ID of the Tavus persona. Defaults to "piopiy-stream"
                 to use the Pipecat TTS voice.
             params: Optional Tavus-specific configuration parameters.
             input_name: Optional name for the input transport.

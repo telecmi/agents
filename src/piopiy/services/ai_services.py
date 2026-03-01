@@ -7,12 +7,12 @@
 """Deprecated AI services module.
 
 This module is deprecated. Import services directly from their respective modules:
-- pipecat.services.ai_service
-- pipecat.services.image_service
-- pipecat.services.llm_service
-- pipecat.services.stt_service
-- pipecat.services.tts_service
-- pipecat.services.vision_service
+- piopiy.services.ai_service
+- piopiy.services.image_service
+- piopiy.services.llm_service
+- piopiy.services.stt_service
+- piopiy.services.tts_service
+- piopiy.services.vision_service
 """
 
 import sys

@@ -49,8 +49,8 @@ import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Types in pipecat.services.openai.realtime.llm (or "
-        "pipecat.services.openai_realtime.llm) are deprecated. \n"
+        "Types in piopiy.services.openai.realtime.llm (or "
+        "piopiy.services.openai_realtime.llm) are deprecated. \n"
         "OpenAI Realtime no longer uses types from this module under the hood. \n"
         "It now uses `LLMContext` and `LLMContextAggregatorPair`. \n"
         "Using the new patterns should allow you to not need types from this module.\n\n"

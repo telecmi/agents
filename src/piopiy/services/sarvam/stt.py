@@ -30,7 +30,7 @@ try:
     from sarvamai.core.events import EventType
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Sarvam, you need to `pip install pipecat-ai[sarvam]`.")
+    logger.error("In order to use Sarvam, you need to `pip install piopiy-ai[sarvam]`.")
     raise Exception(f"Missing module: {e}")
 
 
@@ -43,7 +43,7 @@ def language_to_sarvam_language(language: Language) -> str:
     Returns:
         The Sarvam language code string.
     """
-    # Mapping of pipecat Language enum to Sarvam language codes
+    # Mapping of piopiy Language enum to Sarvam language codes
     LANGUAGE_MAP = {
         Language.BN_IN: "bn-IN",
         Language.GU_IN: "gu-IN",
@@ -157,7 +157,7 @@ class SarvamSTTService(STTService):
         self._receive_task = None
 
     def language_to_service_language(self, language: Language) -> str:
-        """Convert pipecat Language enum to Sarvam's language code.
+        """Convert piopiy Language enum to Sarvam's language code.
 
         Args:
             language: The Language enum value to convert.
@@ -464,7 +464,7 @@ class SarvamSTTService(STTService):
         pass
 
     def _map_language_code_to_enum(self, language_code: str) -> Language:
-        """Map Sarvam language code to pipecat Language enum."""
+        """Map Sarvam language code to piopiy Language enum."""
         mapping = {
             "bn-IN": Language.BN_IN,
             "gu-IN": Language.GU_IN,

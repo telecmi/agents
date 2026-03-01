@@ -18,8 +18,8 @@ from piopiy.transports.websocket.fastapi import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Module `pipecat.transports.network.fastapi_websocket` is deprecated, "
-        "use `pipecat.transports.websocket.fastapi` instead.",
+        "Module `piopiy.transports.network.fastapi_websocket` is deprecated, "
+        "use `piopiy.transports.websocket.fastapi` instead.",
         DeprecationWarning,
         stacklevel=2,
     )

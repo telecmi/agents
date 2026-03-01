@@ -12,7 +12,7 @@ this API can be referenced in Gemini generative model calls.
 
 .. deprecated:: 0.0.90
     Importing GeminiFileAPI from this module is deprecated.
-    Import it from pipecat.services.google.gemini_live.file_api instead.
+    Import it from piopiy.services.google.gemini_live.file_api instead.
 """
 
 import warnings
@@ -23,7 +23,7 @@ try:
     from piopiy.services.google.gemini_live.file_api import GeminiFileAPI as _GeminiFileAPI
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Google AI, you need to `pip install pipecat-ai[google]`.")
+    logger.error("In order to use Google AI, you need to `pip install piopiy-ai[google]`.")
     raise Exception(f"Missing module: {e}")
 
 # These aliases are just here for backward compatibility, since we used to
@@ -31,8 +31,8 @@ except ModuleNotFoundError as e:
 # module.
 warnings.warn(
     "Importing GeminiFileAPI from "
-    "pipecat.services.gemini_multimodal_live.file_api is deprecated. "
-    "Please import it from pipecat.services.google.gemini_live.file_api instead.",
+    "piopiy.services.gemini_multimodal_live.file_api is deprecated. "
+    "Please import it from piopiy.services.google.gemini_live.file_api instead.",
     DeprecationWarning,
     stacklevel=2,
 )

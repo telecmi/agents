@@ -46,8 +46,8 @@ import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Types in pipecat.services.aws.nova_sonic.context (or "
-        "pipecat.services.aws_nova_sonic.context) are deprecated. \n"
+        "Types in piopiy.services.aws.nova_sonic.context (or "
+        "piopiy.services.aws_nova_sonic.context) are deprecated. \n"
         "AWS Nova Sonic no longer uses types from this module under the hood. \n"
         "It now uses `LLMContext` and `LLMContextAggregatorPair`. \n"
         "Using the new patterns should allow you to not need types from this module.\n\n"

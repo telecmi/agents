@@ -61,7 +61,7 @@ class TurnTraceObserver(BaseObserver):
         self._current_span: Optional["Span"] = None
         self._current_turn_number: int = 0
         self._trace_context_map: Dict[int, "SpanContext"] = {}
-        self._tracer = trace.get_tracer("pipecat.turn") if is_tracing_available() else None
+        self._tracer = trace.get_tracer("piopiy.turn") if is_tracing_available() else None
 
         # Conversation tracking properties
         self._conversation_span: Optional["Span"] = None

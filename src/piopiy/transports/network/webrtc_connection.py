@@ -18,8 +18,8 @@ from piopiy.transports.smallwebrtc.connection import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Module `pipecat.transports.network.webrtc_connection` is deprecated, "
-        "use `pipecat.transports.smallwebrtc.connection` instead.",
+        "Module `piopiy.transports.network.webrtc_connection` is deprecated, "
+        "use `piopiy.transports.smallwebrtc.connection` instead.",
         DeprecationWarning,
         stacklevel=2,
     )

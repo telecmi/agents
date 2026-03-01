@@ -18,8 +18,8 @@ from piopiy.transports.livekit.transport import *
 with warnings.catch_warnings():
     warnings.simplefilter("always")
     warnings.warn(
-        "Module `pipecat.transports.services.livekit` is deprecated, "
-        "use `pipecat.transports.livekit.transport` instead.",
+        "Module `piopiy.transports.services.livekit` is deprecated, "
+        "use `piopiy.transports.livekit.transport` instead.",
         DeprecationWarning,
         stacklevel=2,
     )

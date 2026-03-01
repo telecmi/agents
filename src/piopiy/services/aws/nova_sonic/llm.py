@@ -80,7 +80,7 @@ try:
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
     logger.error(
-        "In order to use AWS services, you need to `pip install pipecat-ai[aws-nova-sonic]`."
+        "In order to use AWS services, you need to `pip install piopiy-ai[aws-nova-sonic]`."
     )
     raise Exception(f"Missing module: {e}")
 
@@ -296,7 +296,7 @@ class AWSNovaSonicLLMService(LLMService):
         self._assistant_text_buffer = ""
         self._completed_tool_calls = set()
 
-        file_path = files("pipecat.services.aws.nova_sonic").joinpath("ready.wav")
+        file_path = files("piopiy.services.aws.nova_sonic").joinpath("ready.wav")
         with wave.open(file_path.open("rb"), "rb") as wav_file:
             self._assistant_response_trigger_audio = wav_file.readframes(wav_file.getnframes())
 
@@ -632,7 +632,7 @@ class AWSNovaSonicLLMService(LLMService):
         return self._is_first_generation_sonic_model()
 
     #
-    # LLM communication: input events (pipecat -> LLM)
+    # LLM communication: input events (piopiy -> LLM)
     #
 
     async def _send_session_start_event(self):
@@ -882,7 +882,7 @@ class AWSNovaSonicLLMService(LLMService):
         await self._stream.input_stream.send(event)
 
     #
-    # LLM communication: output events (LLM -> pipecat)
+    # LLM communication: output events (LLM -> piopiy)
     #
 
     # Receive events for the session.

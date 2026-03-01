@@ -27,7 +27,7 @@ try:
 
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Silero VAD, you need to `pip install pipecat-ai[silero]`.")
+    logger.error("In order to use Silero VAD, you need to `pip install piopiy-ai[silero]`.")
     raise Exception(f"Missing module(s): {e}")
 
 
@@ -147,7 +147,7 @@ class SileroVADAnalyzer(VADAnalyzer):
         logger.debug("Loading Silero VAD model...")
 
         model_name = "silero_vad.onnx"
-        package_path = "pipecat.audio.vad.data"
+        package_path = "piopiy.audio.vad.data"
 
         try:
             import importlib_resources as impresources

@@ -19,10 +19,10 @@ from piopiy.audio.filters.base_audio_filter import BaseAudioFilter
 from piopiy.frames.frames import FilterControlFrame, FilterEnableFrame
 
 try:
-    from pipecat_ai_krisp.audio.krisp_processor import KrispAudioProcessor
+    from piopiy_ai_krisp.audio.krisp_processor import KrispAudioProcessor
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use the Krisp filter, you need to `pip install pipecat-ai[krisp]`.")
+    logger.error("In order to use the Krisp filter, you need to `pip install piopiy-ai[krisp]`.")
     raise Exception(f"Missing module: {e}")
 
 

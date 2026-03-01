@@ -32,7 +32,7 @@ try:
     from websockets.protocol import State
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Gradium, you need to `pip install pipecat-ai[gradium]`.")
+    logger.error("In order to use Gradium, you need to `pip install piopiy-ai[gradium]`.")
     raise Exception(f"Missing module: {e}")
 
 SAMPLE_RATE = 48000
@@ -190,7 +190,7 @@ class GradiumTTSService(InterruptibleWordTTSService):
             if self._websocket and self._websocket.state is State.OPEN:
                 return
 
-            headers = {"x-api-key": self._api_key, "x-api-source": "pipecat"}
+            headers = {"x-api-key": self._api_key, "x-api-source": "piopiy"}
             self._websocket = await websocket_connect(self._url, additional_headers=headers)
 
             setup_msg = {

@@ -12,7 +12,7 @@ import httpx
 from loguru import logger
 from pydantic import BaseModel
 
-from piopiy import version as pipecat_version
+from piopiy import version as piopiy_version
 from piopiy.frames.frames import (
     CancelFrame,
     EndFrame,
@@ -34,7 +34,7 @@ try:
     from hume.tts.types import TimestampMessage
 except ModuleNotFoundError as e:  # pragma: no cover - import-time guidance
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Hume, you need to `pip install pipecat-ai[hume]`.")
+    logger.error("In order to use Hume, you need to `pip install piopiy-ai[hume]`.")
     raise Exception(f"Missing module: {e}")
 
 
@@ -42,8 +42,8 @@ HUME_SAMPLE_RATE = 48_000  # Hume TTS streams at 48 kHz
 
 # Tracking headers for Hume API requests
 DEFAULT_HEADERS = {
-    "X-Hume-Client-Name": "pipecat",
-    "X-Hume-Client-Version": pipecat_version(),
+    "X-Hume-Client-Name": "piopiy",
+    "X-Hume-Client-Version": piopiy_version(),
 }
 
 

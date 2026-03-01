@@ -31,7 +31,7 @@ from typing import (
 from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError
 
-from piopiy import version as pipecat_version
+from piopiy import version as piopiy_version
 from piopiy.audio.utils import calculate_audio_volume
 from piopiy.frames.frames import (
     AggregatedTextFrame,
@@ -1884,13 +1884,13 @@ class RTVIProcessor(FrameProcessor):
 
         Args:
             about: Optional information about the bot to include in the ready message.
-                   If left as None, the pipecat library and version will be used.
+                   If left as None, the piopiy library and version will be used.
         """
         config = None
         if self._client_version and self._client_version[0] < 1:
             config = self._config.config
         if not about:
-            about = {"library": "pipecat-ai", "library_version": f"{pipecat_version()}"}
+            about = {"library": "piopiy-ai", "library_version": f"{piopiy_version()}"}
         message = RTVIBotReady(
             id=self._client_ready_id,
             data=RTVIBotReadyData(version=RTVI_PROTOCOL_VERSION, about=about, config=config),

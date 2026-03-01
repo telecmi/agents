@@ -38,7 +38,7 @@ try:
     from websockets.protocol import State
 except ModuleNotFoundError as e:
     logger.error(f"Exception: {e}")
-    logger.error("In order to use Sarvam, you need to `pip install pipecat-ai[sarvam]`.")
+    logger.error("In order to use Sarvam, you need to `pip install piopiy-ai[sarvam]`.")
     raise Exception(f"Missing module: {e}")
 
 
