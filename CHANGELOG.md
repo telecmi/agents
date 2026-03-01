@@ -5,6 +5,13 @@ All notable changes to piopiy-ai will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-03-01
+
+### Fixed
+- Fixed various Python imports incorrectly referring to `pipecat` instead of `piopiy`.
+- Updated PyProject configuration files to point to correct `piopiy` paths.
+- Updated `VoiceAgent` internal processors to use universal `LLMContext` from `piopiy.processors.aggregators.llm_response_universal` in favor of deprecated `OpenAILLMContext`.
+
 ## [0.6.0] - 2026-02-12
 
 ### Added
@@ -44,5 +51,6 @@ Initial release with core functionality.
 
 ---
 
+[0.6.1]: https://github.com/telecmi/agents/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/telecmi/agents/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/telecmi/agents/releases/tag/v0.5.1
