@@ -58,7 +58,7 @@ You should see:
 
 ```python
 # 1. Define what happens for each call
-async def create_session(agent_id, call_id, from_number, to_number, metadata=None):
+async def create_session(agent_id, call_id, from_number, to_number, metadata=None, **kwargs):
     # 2. Create voice agent with instructions
     voice_agent = VoiceAgent(
         instructions="You are a helpful AI assistant.",

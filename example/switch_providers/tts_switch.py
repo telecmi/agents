@@ -8,78 +8,78 @@ from piopiy.services.deepgram.stt import DeepgramSTTService
 from piopiy.services.openai.llm import OpenAILLMService
 from piopiy.services.cartesia.tts import CartesiaTTSService
 from piopiy.services.elevenlabs.tts import ElevenLabsTTSService
+
 from piopiy.pipeline.service_switcher import ServiceSwitcher, ServiceSwitcherStrategyManual
-from piopiy.pipeline.llm_switcher import LLMSwitcher
 from piopiy.adapters.schemas.function_schema import FunctionSchema
 
 dotenv.load_dotenv()
 
-async def create_session(call_id: str, agent_id: str, from_number: str, to_number: str):
-    # Initialize Core Services
+async def create_session(agent_id: str, call_id: str, from_number: str, to_number: str):
+    print(f"📞 New TTS Switch Session: {call_id} from {from_number}")
+    
+    # 1. Initialize Core Services
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
+    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
    
-    # Initialize TTS Services to switch between
+    # 2. Initialize TWO different Text-to-Speech services
     cartesia_tts = CartesiaTTSService(
         api_key=os.getenv("CARTESIA_API_KEY"), 
-        voice_id="bdab08ad-4137-4548-b9db-6142854c7525" # Example Voice ID
+        voice_id="bdab08ad-4137-4548-b9db-6142854c7525" 
     )
     
     elevenlabs_tts = ElevenLabsTTSService(
         api_key=os.getenv("ELEVENLABS_API_KEY"),
-        voice_id="21m00Tcm4TlvDq8ikWAM" # Example Voice ID (Rachel)
+        voice_id="21m00Tcm4TlvDq8ikWAM" # Rachel
     )
 
-    # Create Service Switcher for TTS
+    # 3. Create a Service Switcher container
     tts_services = ServiceSwitcher(
         services=[cartesia_tts, elevenlabs_tts],
         strategy_type=ServiceSwitcherStrategyManual
     )
 
-    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
+    # 4. Initialize the Agent
+    voice_agent = VoiceAgent(
+        instructions="You are a helpful assistant. You start with Cartesia. If the user asks you to change your voice, use the 'manualswitch' tool.",
+        greeting="Hello! I currently sound like Cartesia. Ask me to switch my voice to ElevenLabs!",
+    )
 
-    # Define the switching tool handler
+    # 5. Define the tool that performs the switch
     async def switch_provider_handler(params):
         provider = params.arguments.get("provider")
         target_service = None
+        
         if provider and provider.lower() == "cartesia":
             target_service = cartesia_tts
         elif provider and provider.lower() == "elevenlabs":
             target_service = elevenlabs_tts
         
         if target_service:
-            print(f"Switching TTS provider to {provider}")
+            print(f"🔄 Switching TTS provider to {provider}")
             await voice_agent.switch_service(target_service)
-            return f"Switched TTS provider to {provider}"
+            return f"Successfully switched my voice to {provider}"
         else:
-            return f"Provider {provider} not found available options: cartesia, elevenlabs"
+            return f"Provider {provider} not found. Available: cartesia, elevenlabs"
 
-    # Define Tool Schema
     switch_tool_schema = FunctionSchema(
         name="manualswitch",
         description="Switch the current TTS provider to a different one.",
         properties={
             "provider": {
                 "type": "string",
-                "description": "The name of the provider to switch to (e.g., 'cartesia', 'elevenlabs')."
+                "description": "Provider to switch to ('cartesia' or 'elevenlabs')"
             }
         },
         required=["provider"]
     )
 
-    # Initialize Voice Agent
-    voice_agent = VoiceAgent(
-        instructions="You are a helpful assistant. You can switch your voice provider using the 'manualswitch' tool. You start with Cartesia.",
-        greeting="Hello! I can switch my voice provider. Just ask me to switch to ElevenLabs or Cartesia.",
-    )
-
-    # Register the tool
+    # 6. Register Tool and Start Action
     voice_agent.add_tool(switch_tool_schema, switch_provider_handler)
 
-    # Start Action with the Switcher
     await voice_agent.Action(
         stt=stt,
         llm=llm,
-        tts_switcher=tts_services,
+        tts_switcher=tts_services, # Pass the switcher instead of a single TTS
         vad=True,
         allow_interruptions=True
     )
@@ -92,6 +92,10 @@ async def main():
         agent_token=os.getenv("AGENT_TOKEN"),
         create_session=create_session,
     )
+    
+    print("🚀 Switch Providers Agent starting...")
+    print("   Waiting for calls...")
+    
     await agent.connect()
 
 if __name__ == "__main__":

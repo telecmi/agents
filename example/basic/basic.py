@@ -31,7 +31,8 @@ async def create_session(
     call_id: str,       # Unique identifier for this call
     from_number: str,   # Caller's phone number (E.164 format)
     to_number: str,     # Called phone number (E.164 format)
-    metadata: dict = None  # Optional custom data passed with the call
+    metadata: dict = None,  # Optional custom data passed with the call
+    **kwargs
 ):
     """
     This function is called for EVERY incoming call to your agent.
@@ -49,7 +50,7 @@ async def create_session(
     print(f"   Call ID: {call_id}")
     print(f"   From: {from_number}")
     print(f"   To: {to_number}")
-    print(f"   Metadata: {metadata}")
+    print(f"   Extra Param: {metadata}")
     
     # Example: Use metadata to customize behavior
     customer_name = metadata.get("customer_name", "there") if metadata else "there"

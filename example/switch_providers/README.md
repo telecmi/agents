@@ -1,74 +1,44 @@
-# Service Switching Examples
+# Switch Providers Dynamically
 
-This folder contains examples demonstrating how to switch between different AI providers at runtime using the `ServiceSwitcher` pipeline component.
+This example demonstrates the advanced power of the Piopiy Voice AI Orchestrator's native `ServiceSwitcher`. 
 
-## Getting Started
+Using a custom tool called `manualswitch`, the Voice Agent has the ability to change its own brain—or in this case, its Text-to-Speech (TTS) voice—on the fly mid-conversation based on user requests!
 
-### 1. Installation
+## How It Works
 
-First, install the `piopiy-ai` package using pip. Since these examples use specific providers (Cartesia, ElevenLabs, Deepgram, Speechmatics), you should install the package with the necessary extras.
+1. We initialize **two** different TTS services (Cartesia and ElevenLabs).
+2. We wrap them in a `ServiceSwitcher(strategy_type=ServiceSwitcherStrategyManual)`.
+3. We define a tool that the LLM can call to trigger `await voice_agent.switch_service(target_service)`.
 
-```bash
-# Install with all relevant extras for these examples
-pip install "piopiy-ai[cartesia,elevenlabs,deepgram,speechmatics]"
-```
+## Requirements
 
-*Note: You may need to use quotes around the package name with brackets in some shells (like zsh).*
-
-### 2. Environment Setup
-
-You need to set up your API keys. You can set them as environment variables or create a `.env` file in your project directory.
-
-**Required Keys:**
+You must install the SDK with the relevant provider extras:
 
 ```bash
-AGENT_ID=your_piopiy_agent_id
-AGENT_TOKEN=your_piopiy_agent_token
-OPENAI_API_KEY=sk-...
-CARTESIA_API_KEY=...
-ELEVENLABS_API_KEY=...
-DEEPGRAM_API_KEY=...
-SPEECHMATICS_API_KEY=...
+pip install "piopiy-ai[cartesia,deepgram,openai,elevenlabs,silero]"
 ```
 
-### 3. Running the Examples
+Your `.env` file must contain these keys:
 
-Once installed and configured, you can run the python scripts directly.
+```bash
+AGENT_ID="your_agent_id"
+AGENT_TOKEN="your_agent_token"
+OPENAI_API_KEY="your_openai_key"
+DEEPGRAM_API_KEY="your_deepgram_key"
+CARTESIA_API_KEY="your_cartesia_key"
+ELEVENLABS_API_KEY="your_elevenlabs_key"
+```
 
----
+## Running the Agent
 
-## Examples provided
+Start the worker script to handle incoming calls:
 
-### 1. TTS Switching (`tts_switch.py`)
-
-This example allows you to switch the **Text-to-Speech (TTS)** provider between **Cartesia** and **ElevenLabs** during a live call.
-
-**Run:**
 ```bash
 python tts_switch.py
 ```
 
-**What to say:**
-- "Switch to ElevenLabs"
-- "Switch to Cartesia"
-- "Change my voice to ElevenLabs"
+1. Log in to the **[Piopiy Dashboard](https://dashboard.telecmi.com)**.
+2. Ensure you have purchased a Piopiy phone number and mapped it to your new AI Agent.
+3. **Dial that phone number** from your personal phone to interact with your local agent!
 
-### 2. STT Switching (`stt_switch.py`)
-
-This example allows you to switch the **Speech-to-Text (STT)** provider between **Deepgram** and **Speechmatics** during a live call.
-
-**Run:**
-```bash
-python stt_switch.py
-```
-
-**What to say:**
-- "Switch to Speechmatics"
-- "Switch to Deepgram"
-- "Change my hearing to Speechmatics"
-
-## How it Works
-
-Both examples use a tool (function call) defined in the code (e.g., `manualswitch`) to interpret your request and trigger the `voice_agent.switch_service()` method.
-
-The `ServiceSwitcher` handles the underlying logic of swapping the active service component in the processing pipeline immediately.
+*Try asking the agent to "change to the British voice" or "switch to the ElevenLabs voice"!*
