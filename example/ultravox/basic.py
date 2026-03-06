@@ -1,4 +1,3 @@
-# Sales CRM voice agent example (VoiceAgent with omni + TTS only)
 import asyncio
 import os
 
@@ -20,10 +19,10 @@ async def create_session(call_id: str, agent_id: str, from_number: str, to_numbe
     agent_id = agent_id
     from_number = from_number
     to_number = to_number
-    instructions= "You are a polite and helpful customer support representative for a real estate company."
+    instructions= "You are a polite and helpful customer support representative for a real estate company. Every response under 50 words."
     voice_agent = SpeechAgent(
         instructions=instructions,
-        greeting="Hello! I'm Alice, and thank you for calling! How can I help you find the perfect home today?",
+        greeting="Hello! I'm Alice. A real estate agent. How can I assist you today?",
     )
 
     SERVER_URI = os.getenv("UX_SERVER_URL")
