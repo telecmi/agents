@@ -9,7 +9,7 @@ By injecting an MCP client into the Voice Agent, the LLM can dynamically search 
 Install the SDK with the relevant provider extras:
 
 ```bash
-pip install "piopiy-ai[cartesia,deepgram,openai,silero]" python-dotenv
+pip install "piopiy-ai[cartesia,deepgram,openai,silero]"
 ```
 
 Additionally, you will need an MCP server running. This example is configured to connect to a server via **SSE** (Server-Sent Events), but Piopiy also supports **Stdio**.

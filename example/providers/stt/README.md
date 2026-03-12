@@ -26,7 +26,7 @@ Fast, accurate speech-to-text using Deepgram Nova-2.
 - Smart formatting
 - Interim results
 
-**Install**: `pip install "piopiy-ai[deepgram]" python-dotenv`  
+**Install**: `pip install "piopiy-ai[deepgram]"`  
 **API Key**: https://console.deepgram.com/
 
 ### assemblyai.py
@@ -38,7 +38,7 @@ High-accuracy real-time transcription.
 - Word boosting
 - Multiple languages
 
-**Install**: `pip install "piopiy-ai[assemblyai]" python-dotenv`  
+**Install**: `pip install "piopiy-ai[assemblyai]"`  
 **API Key**: https://www.assemblyai.com/
 
 ## Running Examples

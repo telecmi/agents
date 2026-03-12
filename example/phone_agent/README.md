@@ -7,7 +7,7 @@ This example demonstrates how to implement a dedicated **Phone Agent** mapped to
 You must install the SDK with the relevant provider extras:
 
 ```bash
-pip install "piopiy-ai[cartesia,deepgram,openai,silero]" python-dotenv
+pip install "piopiy-ai[cartesia,deepgram,openai,silero]"
 pip install piopiy
 ```
 

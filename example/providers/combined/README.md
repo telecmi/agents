@@ -14,7 +14,7 @@ Optimized for fastest possible response time.
 
 **Best For**: Real-time conversations, customer service, interactive applications
 
-**Install**: `pip install "piopiy-ai[deepgram,groq,cartesia,silero]" python-dotenv`
+**Install**: `pip install "piopiy-ai[deepgram,groq,cartesia,silero]"`
 
 ### high_quality.py - Premium Quality ⭐
 Optimized for highest quality experience.
@@ -26,7 +26,7 @@ Optimized for highest quality experience.
 
 **Best For**: Premium applications, professional services, high-value interactions
 
-**Install**: `pip install "piopiy-ai[assemblyai,anthropic,elevenlabs,silero]" python-dotenv`
+**Install**: `pip install "piopiy-ai[assemblyai,anthropic,elevenlabs,silero]"`
 
 ## Running Examples
 

@@ -33,7 +33,7 @@ Ultra-low latency TTS with Cartesia Sonic.
 - Natural-sounding voices
 - Multiple languages
 
-**Install**: `pip install "piopiy-ai[cartesia]" python-dotenv`  
+**Install**: `pip install "piopiy-ai[cartesia]"`  
 **API Key**: https://play.cartesia.ai/
 
 ### elevenlabs.py
@@ -44,7 +44,7 @@ Highest quality, most expressive voices.
 - Emotional expression
 - Voice cloning
 
-**Install**: `pip install "piopiy-ai[elevenlabs]" python-dotenv`  
+**Install**: `pip install "piopiy-ai[elevenlabs]"`  
 **API Key**: https://elevenlabs.io/
 
 ### playht.py
@@ -55,7 +55,7 @@ High-quality TTS with voice cloning.
 - Multiple voices
 - Good quality
 
-**Install**: `pip install "piopiy-ai[playht]" python-dotenv`  
+**Install**: `pip install "piopiy-ai[playht]"`  
 **API Key**: https://play.ht/
 
 ## Running Examples

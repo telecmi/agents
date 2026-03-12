@@ -9,7 +9,7 @@ When the customer asks to speak with a human or a supervisor, the AI Agent uses 
 Install the SDK with the relevant provider extras:
 
 ```bash
-pip install "piopiy-ai[cartesia,deepgram,openai,silero]" python-dotenv
+pip install "piopiy-ai[cartesia,deepgram,openai,silero]"
 pip install piopiy
 ```
 

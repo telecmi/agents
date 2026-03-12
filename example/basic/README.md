@@ -13,7 +13,7 @@ Creates a basic voice agent that:
 ## Installation
 
 ```bash
-pip install "piopiy-ai[cartesia,deepgram,openai,silero]" python-dotenv
+pip install "piopiy-ai[cartesia,deepgram,openai,silero]"
 ```
 
 ## Environment Variables
@@ -130,7 +130,7 @@ voice_agent = VoiceAgent(
 - Enable `AGENT_DEBUG=true` to see logs
 
 ### Import errors
-- Reinstall: `pip install "piopiy-ai[cartesia,deepgram,openai,silero]" python-dotenv`
+- Reinstall: `pip install "piopiy-ai[cartesia,deepgram,openai,silero]"`
 - Check Python version: `python --version` (requires 3.10+)
 
 ## Resources
