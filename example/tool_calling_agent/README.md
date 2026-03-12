@@ -9,7 +9,7 @@ The LLM is instructed to use a `get_current_weather` tool when the caller asks a
 You must install the SDK with the relevant provider extras:
 
 ```bash
-pip install "piopiy-ai[cartesia,deepgram,openai,silero]"
+pip install "piopiy-ai[cartesia,deepgram,openai,silero]" python-dotenv
 ```
 
 Your `.env` file must contain these keys:

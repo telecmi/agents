@@ -62,29 +62,29 @@ Install providers you want to use:
 
 ```bash
 # STT providers
-pip install "piopiy-ai[deepgram]"      # Deepgram
-pip install "piopiy-ai[assemblyai]"    # AssemblyAI
-pip install "piopiy-ai[azure]"         # Azure
-pip install "piopiy-ai[google]"        # Google
-pip install "piopiy-ai[whisper]"       # Whisper
+pip install "piopiy-ai[deepgram]" python-dotenv      # Deepgram
+pip install "piopiy-ai[assemblyai]" python-dotenv    # AssemblyAI
+pip install "piopiy-ai[azure]" python-dotenv         # Azure
+pip install "piopiy-ai[google]" python-dotenv        # Google
+pip install "piopiy-ai[whisper]" python-dotenv       # Whisper
 
 # LLM providers
-pip install "piopiy-ai[openai]"        # OpenAI
-pip install "piopiy-ai[anthropic]"     # Anthropic
-pip install "piopiy-ai[groq]"          # Groq
-pip install "piopiy-ai[together]"      # Together
-pip install "piopiy-ai[google]"        # Google Gemini
+pip install "piopiy-ai[openai]" python-dotenv        # OpenAI
+pip install "piopiy-ai[anthropic]" python-dotenv     # Anthropic
+pip install "piopiy-ai[groq]" python-dotenv          # Groq
+pip install "piopiy-ai[together]" python-dotenv      # Together
+pip install "piopiy-ai[google]" python-dotenv        # Google Gemini
 
 # TTS providers
-pip install "piopiy-ai[cartesia]"      # Cartesia
-pip install "piopiy-ai[elevenlabs]"    # ElevenLabs
-pip install "piopiy-ai[playht]"        # PlayHT
-pip install "piopiy-ai[azure]"         # Azure
-pip install "piopiy-ai[google]"        # Google
+pip install "piopiy-ai[cartesia]" python-dotenv      # Cartesia
+pip install "piopiy-ai[elevenlabs]" python-dotenv    # ElevenLabs
+pip install "piopiy-ai[playht]" python-dotenv        # PlayHT
+pip install "piopiy-ai[azure]" python-dotenv         # Azure
+pip install "piopiy-ai[google]" python-dotenv        # Google
 pip install pipecat-murf-tts           # Murf.ai
 
 # Install multiple at once
-pip install "piopiy-ai[deepgram,openai,cartesia,silero]"
+pip install "piopiy-ai[deepgram,openai,cartesia,silero]" python-dotenv
 ```
 
 ## Environment Variables

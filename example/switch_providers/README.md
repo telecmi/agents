@@ -15,7 +15,7 @@ Using a custom tool called `manualswitch`, the Voice Agent has the ability to ch
 You must install the SDK with the relevant provider extras:
 
 ```bash
-pip install "piopiy-ai[cartesia,deepgram,openai,elevenlabs,silero]"
+pip install "piopiy-ai[cartesia,deepgram,openai,elevenlabs,silero]" python-dotenv
 ```
 
 Your `.env` file must contain these keys:

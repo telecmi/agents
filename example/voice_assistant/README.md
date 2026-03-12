@@ -7,7 +7,7 @@ This example provides a clean, ready-to-use template for a general-purpose AI vo
 You must install the SDK with the relevant provider extras:
 
 ```bash
-pip install "piopiy-ai[cartesia,deepgram,openai,silero]"
+pip install "piopiy-ai[cartesia,deepgram,openai,silero]" python-dotenv
 ```
 
 Your `.env` file must contain these keys:
