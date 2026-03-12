@@ -22,7 +22,6 @@ from piopiy.voice_agent import VoiceAgent
 from piopiy.services.deepgram.stt import DeepgramSTTService
 from piopiy.services.openai.llm import OpenAILLMService
 from piopiy.services.cartesia.tts import CartesiaTTSService
-from piopiy.turns.user_start.vad_user_turn_start_strategy import VADUserTurnStartStrategy
 
 load_dotenv()
 
@@ -127,13 +126,13 @@ async def create_session(
         api_key=os.getenv("CARTESIA_API_KEY"),
         
         # Voice selection
-        voice_id="f8f5f1b2-f02d-4d8e-a40d-fd850a487b3d",  # British Lady
+        voice_id="a0e99841-438c-4a64-b679-ae501e7d6091",  # British Lady
         # Other voices:
         # - "79a125e8-cd45-4c13-8a67-188112f4dd22" (British Man)
         # - "694f9389-aac1-45b6-b726-9d9369183238" (American Woman)
         
         # Model selection
-        model="sonic-3",  # Ultra-low latency
+        model="sonic-english",  # Ultra-low latency
         
         # Audio quality
         sample_rate=24000,  # Options: 8000, 16000, 24000, 44100
@@ -146,9 +145,16 @@ async def create_session(
     await voice_agent.Action(
         stt=stt,                    # Speech-to-Text service
         llm=llm,                    # Language Model service
-        tts=tts,      
-        vad=True,              # Text-to-Speech service
-        allow_interruptions=True   # Allow user to interrupt agent (default: True)
+        tts=tts,                    # Text-to-Speech service
+        vad=True,                   # Voice Activity Detection (recommended)
+        allow_interruptions=True,   # Allow user to interrupt agent (default: True)
+        
+        # Optional: Custom VAD configuration
+        # vad_params={
+        #     "threshold": 0.5,      # Detection sensitivity (0-1)
+        #     "prefix_padding_ms": 300,
+        #     "silence_duration_ms": 500
+        # },
     )
     
     # Start processing the call
