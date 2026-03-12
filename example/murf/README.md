@@ -15,7 +15,7 @@ Murf.ai provides high-quality, natural-sounding AI voices with extensive customi
 
 ```bash
 # Install Piopiy with required providers
-pip install "piopiy-ai[deepgram,openai,silero]"
+pip install "piopiy-ai[deepgram,openai,silero]" python-dotenv
 
 # Install Murf.ai TTS package
 pip install pipecat-murf-tts

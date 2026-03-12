@@ -8,10 +8,10 @@ Install the SDK with the providers you plan to test:
 
 ```bash
 # Cloud quickstart stack (OpenAI LLM, Deepgram ASR, Cartesia TTS, Silero VAD)
-pip install "piopiy-ai[cartesia,deepgram,openai,silero]"
+pip install "piopiy-ai[cartesia,deepgram,openai,silero]" python-dotenv
 
 # Open-source stack (Ollama LLM, Whisper ASR, Chatterbox TTS)
-pip install "piopiy-ai[whisper]"
+pip install "piopiy-ai[whisper]" python-dotenv
 ```
 
 Some open-source samples require additional runtimes:

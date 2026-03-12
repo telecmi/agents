@@ -30,7 +30,7 @@ High-quality reasoning with Claude 3.5 Sonnet.
 - Thoughtful responses
 - Function calling
 
-**Install**: `pip install "piopiy-ai[anthropic]"`  
+**Install**: `pip install "piopiy-ai[anthropic]" python-dotenv`  
 **API Key**: https://console.anthropic.com/
 
 ### groq.py
@@ -42,7 +42,7 @@ Ultra-fast inference with Llama 3.3 70B.
 - Good quality
 - Cost-effective
 
-**Install**: `pip install "piopiy-ai[groq]"`  
+**Install**: `pip install "piopiy-ai[groq]" python-dotenv`  
 **API Key**: https://console.groq.com/
 
 ## Running Examples
