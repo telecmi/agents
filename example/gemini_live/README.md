@@ -8,7 +8,7 @@ Because Gemini Live handles both listening to your voice and synthesizing voice 
 
 1. Install the required dependencies:
    ```bash
-   pip install "piopiy-ai[google]"
+   pip install "piopiy-ai[google]" python-dotenv
    ```
 
 2. Setup your Environment Variables. Create a `.env` file in your project root with the following:
