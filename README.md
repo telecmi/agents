@@ -203,6 +203,7 @@ AssemblyAI (STT) + Claude 3.5 Sonnet (LLM) + ElevenLabs (TTS)
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Core concepts, building agents, and advanced features
 - **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
 - **[Migration Guide](docs/MIGRATION.md)** — moving existing code to `VoiceAgent.configure()`
+- **[Realtime / Speech-to-Speech Models](docs/REALTIME_MODELS.md)** — every supported S2S model with constructor params and examples
 - **[Custom & Open-Source Services](docs/CUSTOM_SERVICES.md)** — write your own STT, LLM, audio-LLM, or TTS
 - **[Telephony Setup](docs/TELEPHONY.md)** - Phone numbers, deployment, and production best practices
 - **[Supported Providers](docs/PROVIDERS.md)** - 40+ LLM, STT, and TTS providers

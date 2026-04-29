@@ -38,6 +38,10 @@ Set additional keys depending on the stack you run (for example `OPENAI_API_KEY`
 |---------|-----|-----|--------------|------------|
 | `basic/basic.py` | OpenAI | Deepgram | Cartesia | Minimal cascaded voice loop showcasing `VoiceAgent.configure()` with Silero VAD.
 | `gemini_live/gemini_live_agent.py` | Gemini Live (realtime) | – | – | **Speech-to-speech** — model owns audio in and out (no STT/TTS).
+| `openai_realtime/openai_realtime_agent.py` | OpenAI Realtime (`gpt-realtime`) | – | – | **Speech-to-speech** with OpenAI Realtime.
+| `azure_realtime/azure_realtime_agent.py` | Azure OpenAI Realtime | – | – | **Speech-to-speech** on Azure OpenAI deployments.
+| `aws_nova_sonic/nova_sonic_agent.py` | AWS Nova Sonic | – | – | **Speech-to-speech** with Amazon Nova Sonic on Bedrock.
+| `grok_realtime/grok_realtime_agent.py` | Grok Realtime (xAI) | – | – | **Speech-to-speech** with built-in `web_search` / `x_search` / `file_search` tools.
 | `opensource/cascaded.py` | Ollama (open-source) | Whisper (open-source) | Chatterbox (open-source) | **Fully open-source cascaded stack.** Local-first STT + LLM + TTS.
 | `opensource/hybrid.py` | Ultravox (audio-LLM) | – | VibeVoice (open-source) | **Fully open-source audio-LLM hybrid.** Ultravox replaces STT+LLM; VibeVoice for output.
 | `murf/murf_tts.py` | OpenAI | Deepgram | Murf.ai | High-quality natural voices with extensive customization.

@@ -1,6 +1,29 @@
 # Supported Providers
 
-Piopiy AI supports a wide range of providers for LLM, STT, and TTS.
+Piopiy AI supports a wide range of providers across four categories:
+**Realtime / Speech-to-Speech**, **LLM**, **STT**, and **TTS**.
+
+> For the full constructor reference and runnable examples for every
+> speech-to-speech model, see
+> [docs/REALTIME_MODELS.md](REALTIME_MODELS.md).
+
+## Realtime / Speech-to-Speech models
+
+Audio-in, audio-out (or audio-in, text-out for hybrids). Plug into
+`voice_agent.configure(llm=...)` with no `tts=` for pure S2S, or with
+`tts=` for the audio-LLM hybrid case.
+
+| Model | Class | Mode | Example |
+|---|---|---|---|
+| **Gemini Live** (Google) | `GeminiLiveLLMService` | S2S | [example/gemini_live/](../example/gemini_live/) |
+| **OpenAI Realtime** | `OpenAIRealtimeLLMService` | S2S | [example/openai_realtime/](../example/openai_realtime/) |
+| **Azure OpenAI Realtime** | `AzureRealtimeLLMService` | S2S | [example/azure_realtime/](../example/azure_realtime/) |
+| **AWS Nova Sonic** | `AWSNovaSonicLLMService` | S2S | [example/aws_nova_sonic/](../example/aws_nova_sonic/) |
+| **Grok Realtime** (xAI) | `GrokRealtimeLLMService` | S2S | [example/grok_realtime/](../example/grok_realtime/) |
+| **Ultravox** (cloud) | `UltravoxRealtimeLLMService` | Audio-LLM hybrid | [example/ultravox/](../example/ultravox/) |
+| **Ultravox** (open-source) | `UltravoxService` | Audio-LLM hybrid | [example/opensource/hybrid.py](../example/opensource/hybrid.py) |
+
+## Cascaded providers (LLM, STT, TTS)
 
 | Provider | Categories |
 |---------|------------|
