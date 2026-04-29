@@ -58,7 +58,7 @@ async def create_session(agent_id, call_id, from_number, to_number, metadata=Non
         model="sonic-english"
     )
 
-    await voice_agent.Action(stt=stt, llm=llm, tts=tts, vad=True, allow_interruptions=True)
+    await voice_agent.configure(stt=stt, llm=llm, tts=tts, vad=True, allow_interruptions=True)
     await voice_agent.start()
 
 

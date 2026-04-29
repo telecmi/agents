@@ -103,7 +103,7 @@ async def create_session(agent_id, call_id, from_number, to_number, metadata=Non
     )
 
     # Start the agent with all services
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt=stt,
         llm=llm,
         tts=tts,

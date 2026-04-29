@@ -81,27 +81,30 @@ voice_agent = VoiceAgent(
 | `initial_messages` | list | ❌ | `[]` | Pre-populate conversation history |
 | `end_of_turn_mode` | str | ❌ | `"auto"` | Turn-taking mode: `"auto"` or `"manual"` |
 
-### Action Method Parameters
+### configure() Method Parameters
 
 ```python
-await voice_agent.Action(
-    stt=stt_service,
+await voice_agent.configure(
     llm=llm_service,
-    tts=tts_service,
-    vad=True,
+    stt=stt_service,        # required for cascaded; omit for speech-to-speech
+    tts=tts_service,        # required for cascaded; omit for speech-to-speech
+    vad=True,               # bool | dict | SileroVADAnalyzer | None
     allow_interruptions=True,
-    vad_params={...}
 )
 ```
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `stt` | STTService | ✅ | - | Speech-to-Text service instance |
-| `llm` | LLMService | ✅ | - | Language Model service instance |
-| `tts` | TTSService | ✅ | - | Text-to-Speech service instance |
-| `vad` | bool | ❌ | `True` | Enable Voice Activity Detection |
-| `allow_interruptions` | bool | ❌ | `True` | Allow user to interrupt agent |
-| `vad_params` | dict | ❌ | `{}` | Custom VAD configuration |
+| `llm` | LLMService | ✅ | - | Cascaded LLM **or** a realtime / audio-LLM model |
+| `stt` | STTService | Cascaded only | `None` | Speech-to-Text service. Omit for speech-to-speech / audio-LLM modes |
+| `tts` | TTSService | Cascaded / hybrid only | `None` | Text-to-Speech service. Omit for pure speech-to-speech |
+| `vad` | bool / dict / analyzer | ❌ | `None` | Voice activity detection. `True` enables Silero with defaults |
+| `allow_interruptions` | bool | ❌ | `True` | Allow user to interrupt the agent |
+| `interruption_strategy` | InterruptionStrategy | ❌ | `None` | Override the default `MinWordsInterruptionStrategy` |
+| `mcp_tools` | Any | ❌ | `None` | MCP client/tools to expose to the LLM |
+
+> **`Action()` is still accepted** as a deprecated alias of `configure()`. Old
+> code keeps working unchanged.
 
 ### VAD Parameters
 

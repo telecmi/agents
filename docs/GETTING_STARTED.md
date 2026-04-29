@@ -62,6 +62,12 @@ AGENT_DEBUG=false
 
 ## Your First Voice Agent
 
+`VoiceAgent` works in two modes — **cascaded** (separate STT, LLM, TTS) and
+**speech-to-speech** (a single realtime model owns audio I/O). Both use the
+same `configure()` API; the mode is selected by what you pass.
+
+### Cascaded mode
+
 Create a file `my_agent.py`:
 
 ```python
@@ -79,38 +85,29 @@ load_dotenv()
 
 
 async def create_session(agent_id, call_id, from_number, to_number, metadata=None):
-    """
-    This function is called for each incoming call.
-    Build your voice agent logic here.
-    """
-    print(f"📞 Incoming call {call_id}")
-    print(f"   From: {from_number}")
-    print(f"   To: {to_number}")
-    
+    """Called for each incoming call."""
+    print(f"📞 Incoming call {call_id} from {from_number} to {to_number}")
     if metadata:
         print(f"   Metadata: {metadata}")
 
-    # Create the voice agent
     voice_agent = VoiceAgent(
         instructions="You are a helpful AI assistant. Be concise and friendly.",
         greeting="Hello! How can I help you today?",
     )
 
-    # Configure services
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
     tts = CartesiaTTSService(
         api_key=os.getenv("CARTESIA_API_KEY"),
-        voice_id="bdab08ad-4137-4548-b9db-6142854c7525"  # Default voice
+        voice_id="bdab08ad-4137-4548-b9db-6142854c7525",
     )
 
-    # Start the agent
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt=stt,
         llm=llm,
         tts=tts,
-        vad=True,  # Enable voice activity detection
-        allow_interruptions=True  # Allow user to interrupt
+        vad=True,
+        allow_interruptions=True,
     )
     await voice_agent.start()
 
@@ -120,18 +117,48 @@ async def main():
         agent_id=os.getenv("AGENT_ID"),
         agent_token=os.getenv("AGENT_TOKEN"),
         create_session=create_session,
-        debug=False  # Set to True for verbose logging
+        debug=False,
     )
-    
-    print("🚀 Agent starting...")
-    print("   Waiting for calls...")
-    
+    print("🚀 Agent starting... waiting for calls.")
     await agent.connect()
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+### Speech-to-speech mode
+
+For realtime models like Gemini Live or OpenAI Realtime, drop STT and TTS — the
+model consumes user audio and emits agent audio directly:
+
+```python
+from piopiy.services.google.gemini_live.llm import (
+    GeminiLiveLLMService, GeminiModalities, InputParams,
+)
+
+async def create_session(agent_id, call_id, from_number, to_number, metadata=None):
+    voice_agent = VoiceAgent(
+        instructions="You are a friendly voice assistant.",
+        greeting="Hi! How can I help?",
+    )
+
+    llm = GeminiLiveLLMService(
+        api_key=os.getenv("GOOGLE_API_KEY"),
+        model="models/gemini-2.0-flash-exp",
+        params=InputParams(modalities=GeminiModalities.AUDIO),
+    )
+
+    await voice_agent.configure(llm=llm, allow_interruptions=True)
+    await voice_agent.start()
+```
+
+Same `VoiceAgent`, same `configure()`, same `start()`. The presence or absence
+of `tts=` is what selects the mode.
+
+> **Compatibility:** older code using `voice_agent.Action(...)` or the
+> separate `SpeechAgent` class still works — both forward to
+> `VoiceAgent.configure()`. New code should prefer `configure()`.
 
 ## Run Your Agent
 
@@ -162,12 +189,21 @@ You should see:
 
 ## What Happens During a Call
 
+**Cascaded mode** (STT → LLM → TTS):
+
 1. **Incoming Call**: Your `create_session` function is invoked
-2. **Greeting**: The agent speaks the greeting message
-3. **Listening**: STT converts speech to text
-4. **Processing**: LLM generates a response
-5. **Speaking**: TTS converts text to speech
-6. **Loop**: Continues until call ends
+2. **Greeting**: The agent speaks the greeting via the TTS service
+3. **Listening**: STT converts user speech to text
+4. **Processing**: LLM generates a text response
+5. **Speaking**: TTS converts the text to audio
+6. **Loop**: Steps 3–5 continue until the call ends
+
+**Speech-to-speech mode** (realtime model):
+
+1. **Incoming Call**: `create_session` is invoked
+2. **Greeting**: The realtime model speaks the greeting (set in the context)
+3. **Conversation**: User audio streams in; agent audio streams out — the model handles both
+4. **Loop**: Continues until the call ends
 
 ## Understanding the Output
 

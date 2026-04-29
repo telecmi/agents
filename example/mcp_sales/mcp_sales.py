@@ -38,7 +38,7 @@ async def create_session(agent_id, call_id, from_number, to_number, **kwargs):
     print("🔗 Registering MCP tools...")
     mcp_tools = await mcp.register_tools(llm)
 
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt=stt, 
         llm=llm, 
         tts=tts,

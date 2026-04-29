@@ -6,7 +6,7 @@ from piopiy.agent import Agent
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.audio.vad.silero import SileroVADAnalyzer
 from piopiy.transcriptions.language import Language
-from piopiy.speech_agent import SpeechAgent
+from piopiy.voice_agent import VoiceAgent
 from piopiy.opensource.ultravox.llm import OpenUltravoxLLM
 from piopiy.opensource.vibevoice.tts import OpenVibeVoiceTTSService
 from piopiy.transcriptions.language import Language
@@ -20,7 +20,7 @@ async def create_session(call_id: str, agent_id: str, from_number: str, to_numbe
     from_number = from_number
     to_number = to_number
     instructions= "You are a polite and helpful customer support representative for a real estate company. Every response under 50 words."
-    voice_agent = SpeechAgent(
+    voice_agent = VoiceAgent(
         instructions=instructions,
         greeting="Hello! I'm Alice. A real estate agent. How can I assist you today?",
     )
@@ -41,12 +41,13 @@ async def create_session(call_id: str, agent_id: str, from_number: str, to_numbe
 
     vad = SileroVADAnalyzer()
 
-    await voice_agent.Action(
-        omni=llm,                
+    # Audio-LLM hybrid: Ultravox in, VibeVoice TTS out.
+    await voice_agent.configure(
+        llm=llm,
         tts=tts,
         vad=vad,
         allow_interruptions=True,
-        interruption_strategy=MinWordsInterruptionStrategy(min_words=1)
+        interruption_strategy=MinWordsInterruptionStrategy(min_words=1),
     )
 
     await voice_agent.start()

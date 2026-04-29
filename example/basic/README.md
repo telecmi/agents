@@ -71,7 +71,7 @@ async def create_session(agent_id, call_id, from_number, to_number, metadata=Non
     tts = CartesiaTTSService(api_key=...)  # Text-to-Speech
     
     # 4. Start the agent
-    await voice_agent.Action(stt=stt, llm=llm, tts=tts, vad=True)
+    await voice_agent.configure(stt=stt, llm=llm, tts=tts, vad=True)
     await voice_agent.start()
 
 # 5. Connect to Piopiy
@@ -113,6 +113,7 @@ voice_agent = VoiceAgent(
 
 ## Next Steps
 
+- **[Gemini Live (Speech-to-Speech)](../gemini_live/)** — drop STT/TTS, use a single realtime model
 - **[MCP Sales Example](../mcp_sales/)** - Add function calling and tools
 - **[Function Calling Examples](../function_calling/)** - Weather, CRM integrations
 - **[Provider Switching](../switch_providers/)** - Dynamic provider changes

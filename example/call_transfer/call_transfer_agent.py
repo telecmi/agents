@@ -79,7 +79,7 @@ async def create_session(agent_id, call_id, from_number, to_number, **kwargs):
     voice_agent.add_tool(transfer_tool, transfer_handler)
 
     # Start the Action
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt=stt,
         llm=llm,
         tts=tts,

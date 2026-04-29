@@ -1,4 +1,4 @@
-# Sales CRM voice agent example (VoiceAgent with omni + TTS only)
+# Sales CRM voice agent example (audio-LLM hybrid: Ultravox in, external TTS out)
 import asyncio
 import os
 
@@ -6,17 +6,15 @@ from dotenv import load_dotenv
 from piopiy.agent import Agent
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 from piopiy.audio.vad.silero import SileroVADAnalyzer
-from piopiy.services.opensource.orpheus.tts import OrpheusTTS
 from piopiy.transcriptions.language import Language
-from piopiy.speech_agent import SpeechAgent
-# from piopiy.services.cartesia.tts import CartesiaTTSService
+from piopiy.voice_agent import VoiceAgent
 from piopiy.services.deepgram.tts import DeepgramTTSService
-from piopiy.services.opensource.ultravox.omni import UltravoxService  # <-- your omni runtime
+from piopiy.services.opensource.ultravox.omni import UltravoxService  # audio-in LLM
 
 load_dotenv()
 
 async def create_session():
-    voice_agent = SpeechAgent(
+    voice_agent = VoiceAgent(
         instructions=(
             "You are an advanced voice AI sales assistant for a CRM platform. "
             "Your role is to engage with potential customers, understand their needs, "
@@ -58,13 +56,14 @@ async def create_session():
     # --- Optional VAD (recommended for telephony) ---
     vad = SileroVADAnalyzer()
 
-    # Build pipeline: Transport → OMNI → TTS → Transport
-    await voice_agent.Action(
-        omni=omni,                # <— only omni + tts
-        tts=tts,
+    # Audio-LLM hybrid: Ultravox does ASR+LLM, external TTS speaks the reply.
+    # Pipeline: Transport.input → llm (Ultravox) → tts → Transport.output
+    await voice_agent.configure(
+        llm=omni,           # Ultravox replaces both STT and the LLM stage
+        tts=tts,            # external TTS for the agent's voice
         vad=vad,
         allow_interruptions=True,
-        interruption_strategy=MinWordsInterruptionStrategy(min_words=1)
+        interruption_strategy=MinWordsInterruptionStrategy(min_words=1),
     )
 
     await voice_agent.start()

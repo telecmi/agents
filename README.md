@@ -23,7 +23,14 @@ pip install "piopiy-ai[cartesia,deepgram,openai]"
 
 Set provider API keys in the environment (for example, `OPENAI_API_KEY`).
 
-## Quick Example
+## Two ways to build an agent
+
+`VoiceAgent` supports both **cascaded** (STT → LLM → TTS) and **speech-to-speech**
+(realtime models like Gemini Live or OpenAI Realtime) pipelines through the same
+`configure()` API. The mode is selected by the arguments you pass — supply `tts`
+for cascaded, omit it for speech-to-speech.
+
+### Cascaded — STT + LLM + TTS
 
 ```python
 import asyncio
@@ -38,8 +45,6 @@ from piopiy.services.cartesia.tts import CartesiaTTSService
 
 async def create_session(agent_id, call_id, from_number, to_number, metadata=None):
     print(f"Incoming call {call_id} from {from_number} to {to_number}")
-    if metadata:
-        print(f"Call Metadata: {metadata}")
 
     voice_agent = VoiceAgent(
         instructions="You are an advanced voice AI.",
@@ -50,7 +55,7 @@ async def create_session(agent_id, call_id, from_number, to_number, metadata=Non
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
     tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"))
 
-    await voice_agent.Action(stt=stt, llm=llm, tts=tts)
+    await voice_agent.configure(stt=stt, llm=llm, tts=tts, vad=True)
     await voice_agent.start()
 
 
@@ -59,7 +64,7 @@ async def main():
         agent_id=os.getenv("AGENT_ID"),
         agent_token=os.getenv("AGENT_TOKEN"),
         create_session=create_session,
-        debug=True # Enable debug logging (optional, default: False)
+        debug=True,
     )
     await agent.connect()
 
@@ -67,6 +72,42 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+### Speech-to-Speech — realtime model owns audio I/O
+
+```python
+from piopiy.agent import Agent
+from piopiy.voice_agent import VoiceAgent
+from piopiy.services.google.gemini_live.llm import (
+    GeminiLiveLLMService,
+    GeminiModalities,
+    InputParams,
+)
+
+
+async def create_session(agent_id, call_id, from_number, to_number, metadata=None):
+    voice_agent = VoiceAgent(
+        instructions="You are a professional voice assistant.",
+        greeting="Hi! This is Gemini Live. How can I help?",
+    )
+
+    gemini_live = GeminiLiveLLMService(
+        api_key=os.getenv("GOOGLE_API_KEY"),
+        model="models/gemini-2.0-flash-exp",
+        params=InputParams(modalities=GeminiModalities.AUDIO),
+    )
+
+    # No stt, no tts — the realtime model handles both directions.
+    await voice_agent.configure(llm=gemini_live, allow_interruptions=True)
+    await voice_agent.start()
+```
+
+The same pattern works with `OpenAIRealtimeLLMService`, `AWSNovaSonicLLMService`,
+`GrokLiveLLMService`, `UltravoxSTTService`, and other speech-to-speech models.
+
+> **Backward compatibility:** the older `voice_agent.Action(...)` method and
+> the `SpeechAgent` class still work. Both forward to `VoiceAgent.configure()`
+> internally. New code should prefer `configure()` and a single `VoiceAgent`.
 
 ## Configuration & Debugging
 
@@ -161,6 +202,8 @@ AssemblyAI (STT) + Claude 3.5 Sonnet (LLM) + ElevenLabs (TTS)
 - **[Getting Started](docs/GETTING_STARTED.md)** - Installation, setup, and your first voice agent
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Core concepts, building agents, and advanced features
 - **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
+- **[Migration Guide](docs/MIGRATION.md)** — moving existing code to `VoiceAgent.configure()`
+- **[Custom & Open-Source Services](docs/CUSTOM_SERVICES.md)** — write your own STT, LLM, audio-LLM, or TTS
 - **[Telephony Setup](docs/TELEPHONY.md)** - Phone numbers, deployment, and production best practices
 - **[Supported Providers](docs/PROVIDERS.md)** - 40+ LLM, STT, and TTS providers
 - **[Examples](example/README.md)** - Code examples and use cases
@@ -235,7 +278,7 @@ async def create_session():
     llm = OLLamaLLMService(model="llama3.1")  # points to your local Ollama runtime
     tts = ChatterboxTTSService(base_url="ws://localhost:6078")
 
-    await voice_agent.Action(stt=stt, llm=llm, tts=tts, vad=True)
+    await voice_agent.configure(stt=stt, llm=llm, tts=tts, vad=True)
     await voice_agent.start()
 ```
 

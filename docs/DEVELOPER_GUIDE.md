@@ -25,9 +25,21 @@ Incoming Call → create_session() → VoiceAgent → Audio Pipeline → Convers
 **Key Components:**
 
 - **Agent**: Manages connections to Piopiy's signaling server and handles incoming calls
-- **VoiceAgent**: Orchestrates the conversation flow (STT → LLM → TTS)
-- **Services**: Pluggable providers for STT, LLM, and TTS
+- **VoiceAgent**: Orchestrates the conversation. Supports two modes — cascaded (STT → LLM → TTS) and speech-to-speech (a single realtime model)
+- **Services**: Pluggable providers for STT, LLM, TTS, and realtime models
 - **Transport**: Handles audio streaming (WebRTC, WebSocket, etc.)
+
+### Cascaded vs Speech-to-Speech
+
+`VoiceAgent.configure()` accepts both shapes:
+
+| Mode | What you pass | Pipeline | Best for |
+|------|--------------|----------|----------|
+| **Cascaded** | `stt`, `llm`, `tts` | `input → stt → llm → tts → output` | Provider flexibility (mix STT/LLM/TTS), tool-rich agents, lowest cost |
+| **Speech-to-speech** | `llm` only (a realtime model) | `input → llm → output` | Lowest latency, natural prosody, supports Gemini Live, OpenAI Realtime, Nova Sonic, Grok Realtime, Ultravox |
+
+The mode is auto-detected: if you pass `tts=`, it builds a cascaded pipeline. If
+you don't, it builds a speech-to-speech pipeline.
 
 ### The create_session Callback
 
@@ -206,7 +218,7 @@ pip install "piopiy-ai[silero]"
 ```python
 from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
 
-await voice_agent.Action(
+await voice_agent.configure(
     stt=stt,
     llm=llm,
     tts=tts,
@@ -221,6 +233,63 @@ await voice_agent.Action(
 - `MinWordsInterruptionStrategy(min_words=1)`: Interrupt after N words
 - `MinDurationInterruptionStrategy(min_duration=0.5)`: Interrupt after N seconds
 - Custom strategies: Implement your own logic
+
+---
+
+### Speech-to-Speech with Realtime Models
+
+For ultra-low-latency conversations, use a realtime/multimodal model that
+consumes user audio and emits agent audio directly — no separate STT or TTS
+needed. The same `VoiceAgent.configure()` call handles this; just omit `tts=`.
+
+#### Gemini Live
+
+```python
+from piopiy.services.google.gemini_live.llm import (
+    GeminiLiveLLMService,
+    GeminiModalities,
+    InputParams,
+)
+
+llm = GeminiLiveLLMService(
+    api_key=os.getenv("GOOGLE_API_KEY"),
+    model="models/gemini-2.0-flash-exp",
+    params=InputParams(
+        modalities=GeminiModalities.AUDIO,
+        temperature=0.7,
+    ),
+)
+
+await voice_agent.configure(llm=llm, allow_interruptions=True)
+await voice_agent.start()
+```
+
+#### OpenAI Realtime
+
+```python
+from piopiy.services.openai_realtime.llm import OpenAIRealtimeLLMService
+
+llm = OpenAIRealtimeLLMService(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    model="gpt-4o-realtime-preview",
+)
+
+await voice_agent.configure(llm=llm)
+await voice_agent.start()
+```
+
+#### When to choose which
+
+- **Cascaded** if you need precise STT control (custom vocabulary, language
+  switching), TTS voice cloning, or want to minimize cost. You can mix
+  cheaper STT with a stronger LLM and a premium voice.
+- **Speech-to-speech** if you want the lowest possible end-to-end latency and
+  the most natural prosody. The model preserves emotion and tone in the user's
+  audio when it generates a response.
+
+The greeting is delivered the same way in both modes (`greeting=` argument on
+`VoiceAgent`). For cascaded mode it's spoken by the TTS service; for
+speech-to-speech the realtime model speaks it from the conversation context.
 
 ---
 
@@ -290,7 +359,7 @@ tts_switcher = ServiceSwitcher(
     default="english"
 )
 
-await voice_agent.Action(stt=stt, llm=llm, tts=tts_switcher)
+await voice_agent.configure(stt=stt, llm=llm, tts=tts_switcher)
 
 # Switch during conversation
 await tts_switcher.switch_to("spanish")
@@ -335,7 +404,7 @@ async def create_session(call_id, **kwargs):
         llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
         tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"))
         
-        await voice_agent.Action(stt=stt, llm=llm, tts=tts)
+        await voice_agent.configure(stt=stt, llm=llm, tts=tts)
         await voice_agent.start()
         
     except Exception as e:
@@ -385,7 +454,7 @@ llm = OpenAILLMService(model="gpt-4o-mini")  # Low latency
 tts = CartesiaTTSService()  # Sub-second TTFB
 
 # Enable VAD for natural interruptions
-await voice_agent.Action(
+await voice_agent.configure(
     stt=stt, llm=llm, tts=tts,
     vad=True,
     allow_interruptions=True
@@ -488,6 +557,8 @@ async def create_session(call_id, **kwargs):
 ## Next Steps
 
 - **[API Reference](API_REFERENCE.md)** - Complete API documentation
+- **[Custom & Open-Source Services](CUSTOM_SERVICES.md)** — write your own STT, audio-LLM, S2S, or TTS
+- **[Migration Guide](MIGRATION.md)** — moving older code to the unified `configure()` API
 - **[Examples](../example/README.md)** - More code examples
 - **[Providers](PROVIDERS.md)** - Explore all supported providers
 - **[Telephony Setup](TELEPHONY.md)** - Deploy to production

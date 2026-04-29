@@ -76,7 +76,7 @@ async def create_session(agent_id: str, call_id: str, from_number: str, to_numbe
     # 6. Register Tool and Start Action
     voice_agent.add_tool(switch_tool_schema, switch_provider_handler)
 
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt=stt,
         llm=llm,
         tts_switcher=tts_services, # Pass the switcher instead of a single TTS

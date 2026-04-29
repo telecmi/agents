@@ -122,18 +122,26 @@ voice_agent = VoiceAgent(
 
 ### Methods
 
-#### `Action()`
+#### `configure()`
 
-Configures the voice agent with STT, LLM, and TTS services.
+Configures the voice agent. Selects between cascaded and speech-to-speech modes
+based on the arguments — supply `tts=` for cascaded, omit it for
+speech-to-speech.
 
 ```python
-await voice_agent.Action(
-    stt: STTService,
+await voice_agent.configure(
     llm: LLMService,
-    tts: TTSService,
-    vad: bool = False,
-    allow_interruptions: bool = False,
-    interruption_strategy: Optional[InterruptionStrategy] = None
+    stt: Optional[STTService] = None,
+    tts: Optional[TTSService] = None,
+    stt_switcher: Optional[ServiceSwitcher] = None,
+    tts_switcher: Optional[ServiceSwitcher] = None,
+    mcp_tools: Optional[Any] = None,
+    vad: Optional[Any] = None,
+    enable_metrics: bool = True,
+    enable_usage_metrics: bool = True,
+    allow_interruptions: bool = True,
+    interruption_strategy: Optional[InterruptionStrategy] = None,
+    telecmi_params: Optional[TelecmiParams] = None,
 )
 ```
 
@@ -141,29 +149,64 @@ await voice_agent.Action(
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `stt` | `STTService` | Yes | - | Speech-to-text service instance |
-| `llm` | `LLMService` | Yes | - | Large language model service instance |
-| `tts` | `TTSService` | Yes | - | Text-to-speech service instance |
-| `vad` | `bool` | No | `False` | Enable voice activity detection |
-| `allow_interruptions` | `bool` | No | `False` | Allow user to interrupt agent |
-| `interruption_strategy` | `InterruptionStrategy` | No | `None` | Custom interruption logic |
+| `llm` | `LLMService` | Yes | - | Cascaded LLM (e.g. `OpenAILLMService`) **or** a realtime model (e.g. `GeminiLiveLLMService`, `OpenAIRealtimeLLMService`) |
+| `stt` | `STTService` | Cascaded only | `None` | Speech-to-text service. Required when `tts` is supplied. Omit for speech-to-speech. |
+| `tts` | `TTSService` | Cascaded only | `None` | Text-to-speech service. **Omitting this puts the agent in speech-to-speech mode.** |
+| `stt_switcher` / `tts_switcher` | `ServiceSwitcher` | No | `None` | Use instead of `stt` / `tts` when you want to swap providers at runtime |
+| `mcp_tools` | `Any` | No | `None` | An MCP client/tools object to wire into the LLM context |
+| `vad` | `bool \| dict \| SileroVADAnalyzer \| None` | No | `None` | Voice activity detection. `True` enables Silero with defaults; pass a `dict` (`confidence`, `start_secs`, `stop_secs`, `min_volume`) for custom params, or a pre-built analyzer |
+| `enable_metrics` | `bool` | No | `True` | Emit pipeline performance metrics |
+| `enable_usage_metrics` | `bool` | No | `True` | Emit token / API usage metrics |
+| `allow_interruptions` | `bool` | No | `True` | Allow the user to interrupt the agent while it's speaking |
+| `interruption_strategy` | `InterruptionStrategy` | No | `None` | Override the default min-words interruption strategy |
+| `telecmi_params` | `TelecmiParams` | No | (sane defaults) | Override the default TeleCMI transport configuration |
 
 **Returns:** `None`
 
-**Example:**
+**Cascaded example:**
 
 ```python
-from piopiy.audio.interruptions.min_words_interruption_strategy import MinWordsInterruptionStrategy
-
-await voice_agent.Action(
+await voice_agent.configure(
     stt=DeepgramSTTService(api_key="..."),
     llm=OpenAILLMService(api_key="..."),
     tts=CartesiaTTSService(api_key="..."),
     vad=True,
     allow_interruptions=True,
-    interruption_strategy=MinWordsInterruptionStrategy(min_words=2)
 )
 ```
+
+**Speech-to-speech example:**
+
+```python
+from piopiy.services.google.gemini_live.llm import (
+    GeminiLiveLLMService, GeminiModalities, InputParams,
+)
+
+llm = GeminiLiveLLMService(
+    api_key=os.getenv("GOOGLE_API_KEY"),
+    model="models/gemini-2.0-flash-exp",
+    params=InputParams(modalities=GeminiModalities.AUDIO),
+)
+
+await voice_agent.configure(llm=llm, allow_interruptions=True)
+```
+
+#### `Action()` *(deprecated alias)*
+
+Backward-compatible alias of `configure()`. Existing code calling
+`voice_agent.Action(stt=..., llm=..., tts=...)` continues to work; new code
+should prefer `configure()`.
+
+#### `add_tool(schema, handler)` / `register_tool(name, handler)`
+
+Register a tool/function for the LLM to call. `add_tool` takes a
+`FunctionSchema` and an async handler; `register_tool` takes a name and a
+handler and is useful when the schema is supplied via the constructor's
+`tools=` argument.
+
+#### `switch_service(service)`
+
+Swap an STT or TTS processor at runtime. Used together with `ServiceSwitcher`.
 
 #### `start()`
 
@@ -370,7 +413,7 @@ tts_switcher = ServiceSwitcher(
 )
 
 # Use in agent
-await voice_agent.Action(stt=stt, llm=llm, tts=tts_switcher)
+await voice_agent.configure(stt=stt, llm=llm, tts_switcher=tts_switcher)
 
 # Switch during call
 await tts_switcher.switch_to("spanish")

@@ -30,7 +30,7 @@ async def create_session(agent_id, call_id, from_number, to_number, metadata=Non
     llm = {Provider}LLMService(api_key=os.getenv("{PROVIDER}_API_KEY"))
     tts = {Provider}TTSService(api_key=os.getenv("{PROVIDER}_API_KEY"))
     
-    await voice_agent.Action(stt=stt, llm=llm, tts=tts, vad=True)
+    await voice_agent.configure(stt=stt, llm=llm, tts=tts, vad=True)
     await voice_agent.start()
 
 async def main():

@@ -30,7 +30,7 @@ async def create_session():
     #tts = CartesiaTTSService(api_key=os.getenv("CARTESIA_API_KEY"), voice_id="bdab08ad-4137-4548-b9db-6142854c7525")
     tts = OrpheusTTS(base_url="ws://0.0.0.0:8765", sample_rate=24000)
 
-    await voice_agent.Action(stt=stt, llm=llm, tts=tts,vad=vad)
+    await voice_agent.configure(stt=stt, llm=llm, tts=tts,vad=vad)
     await voice_agent.start()
 
 

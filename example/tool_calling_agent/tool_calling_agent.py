@@ -59,7 +59,7 @@ async def create_session(agent_id: str, call_id: str, from_number: str, to_numbe
     # Register the tool!
     voice_agent.add_tool(weather_function, get_current_weather)
 
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt=stt,
         llm=llm,
         tts=tts,

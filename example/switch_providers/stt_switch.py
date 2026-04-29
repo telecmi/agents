@@ -70,7 +70,7 @@ async def create_session(call_id: str, agent_id: str, from_number: str, to_numbe
     voice_agent.add_tool(switch_tool_schema, switch_stt_handler)
 
     # Start Action with the Switcher
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt_switcher=stt_services,
         llm=llm,
         tts=tts,

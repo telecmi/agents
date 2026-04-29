@@ -48,7 +48,7 @@ async def create_session(agent_id, call_id, from_number, to_number, metadata=Non
         voice_id="a0e99841-438c-4a64-b679-ae501e7d6091"
     )
 
-    await voice_agent.Action(stt=stt, llm=llm, tts=tts, vad=True)
+    await voice_agent.configure(stt=stt, llm=llm, tts=tts, vad=True)
     await voice_agent.start()
 
 

@@ -111,7 +111,7 @@ async def create_session():
     
     vad = SileroVADAnalyzer()
     
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt=stt,
         llm=llm,
         tts=tts,

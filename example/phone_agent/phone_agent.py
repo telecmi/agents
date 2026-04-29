@@ -50,7 +50,7 @@ async def create_session(agent_id: str, call_id: str, from_number: str, to_numbe
     )
 
     # 5. Start the pipeline
-    await voice_agent.Action(
+    await voice_agent.configure(
         stt=stt,
         llm=llm,
         tts=tts,
